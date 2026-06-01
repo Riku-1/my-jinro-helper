@@ -26,7 +26,6 @@ export const ICON_CATEGORIES: IconCategory[] = [
     icons: [
       { id: 'white',   label: '白', color: '#f8fafc', textColor: '#1e293b', title: '白判定', border: '#94a3b8' },
       { id: 'black',   label: '黒', color: '#1e293b', textColor: '#f8fafc', title: '黒判定', border: '#475569' },
-      { id: 'unknown', label: '？', color: '#64748b', textColor: '#fff',    title: '不明' },
     ],
   },
   {
