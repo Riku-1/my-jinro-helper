@@ -6,10 +6,6 @@ export const ICON_CATEGORIES = [
       { id: 'medium',   label: '霊', color: '#8b5cf6', textColor: '#fff', title: '霊媒師' },
       { id: 'knight',   label: '騎', color: '#f59e0b', textColor: '#fff', title: '騎士' },
       { id: 'hunter',   label: '狩', color: '#84cc16', textColor: '#fff', title: '狩人' },
-      { id: 'villager', label: '村', color: '#10b981', textColor: '#fff', title: '村人' },
-      { id: 'madman',   label: '狂', color: '#f97316', textColor: '#fff', title: '狂人' },
-      { id: 'werewolf', label: '狼', color: '#ef4444', textColor: '#fff', title: '人狼' },
-      { id: 'fox',      label: '妖', color: '#ec4899', textColor: '#fff', title: '妖狐' },
     ],
   },
   {
