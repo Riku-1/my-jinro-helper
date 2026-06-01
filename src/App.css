@@ -249,6 +249,46 @@
   letter-spacing: 0.1em;
 }
 
+.comment-input-row {
+  display: flex;
+  gap: 4px;
+}
+
+.comment-input {
+  flex: 1;
+  min-width: 0;
+  padding: 5px 7px;
+  background: #0f172a;
+  color: #f1f5f9;
+  border: 1px solid #334155;
+  border-radius: 5px;
+  font-size: 0.78rem;
+  outline: none;
+}
+
+.comment-input:focus {
+  border-color: #fbbf24;
+}
+
+.comment-input::placeholder {
+  color: #475569;
+}
+
+.comment-add-btn {
+  padding: 0 8px;
+  background: #fbbf24;
+  color: #1c1917;
+  border: none;
+  border-radius: 5px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  line-height: 1;
+  transition: opacity 0.1s;
+}
+
+.comment-add-btn:hover { opacity: 0.85; }
+
 .comment-list {
   display: flex;
   flex-direction: column;
@@ -276,6 +316,28 @@
 .comment-chip:active {
   cursor: grabbing;
 }
+
+.comment-chip--custom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  background: #fde68a;
+  border-color: #f59e0b;
+}
+
+.comment-chip-remove {
+  background: none;
+  border: none;
+  color: #92400e;
+  font-size: 0.85rem;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0 2px;
+  flex-shrink: 0;
+}
+
+.comment-chip-remove:hover { color: #7f1d1d; }
 
 /* ── Placed comments ─────────────────────────── */
 .placed-comment {
