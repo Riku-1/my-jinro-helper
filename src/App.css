@@ -185,3 +185,25 @@
 .placed-icon:active {
   cursor: grabbing;
 }
+
+.placed-icon--badge {
+  width: 52px;
+  height: 26px;
+  border-radius: 5px;
+  padding: 0;
+  font-size: 0.85rem;
+  letter-spacing: 0.05em;
+}
+
+.placed-icon--badge:hover {
+  transform: translate(-50%, -50%) scale(1.1);
+}
+
+.palette-icon--badge {
+  width: 52px;
+  height: 32px;
+  border-radius: 5px;
+  padding: 0;
+  font-size: 0.9rem;
+  letter-spacing: 0.05em;
+}

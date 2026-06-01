@@ -15,7 +15,7 @@ export default function IconPalette() {
             {cat.icons.map((iconDef) => (
               <div
                 key={iconDef.id}
-                className="palette-icon"
+                className={`palette-icon${iconDef.shape === 'badge' ? ' palette-icon--badge' : ''}`}
                 draggable
                 onDragStart={(e) => handleDragStart(e, iconDef)}
                 style={{

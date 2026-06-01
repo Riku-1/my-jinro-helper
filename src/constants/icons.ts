@@ -5,6 +5,7 @@ export type IconDef = {
   textColor: string;
   title: string;
   border?: string;
+  shape?: 'badge';
 };
 
 export type IconCategory = {
@@ -31,9 +32,8 @@ export const ICON_CATEGORIES: IconCategory[] = [
   {
     label: '状態',
     icons: [
-      { id: 'dead',    label: '死', color: '#374151', textColor: '#9ca3af', title: '死亡' },
-      { id: 'suspect', label: '怪', color: '#92400e', textColor: '#fde68a', title: '怪しい' },
-      { id: 'safe',    label: '安', color: '#065f46', textColor: '#a7f3d0', title: '安全' },
+      { id: 'attack', label: '╲╲╲', color: '#7f1d1d', textColor: '#fca5a5', title: '襲撃', shape: 'badge' },
+      { id: 'hang',   label: '✕',   color: '#dc2626', textColor: '#fff',    title: '吊り', shape: 'badge' },
     ],
   },
 ];

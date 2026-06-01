@@ -13,7 +13,7 @@ export default function PlacedIcon({ icon, onDragStart, onRemove }: Props) {
 
   return (
     <div
-      className="placed-icon"
+      className={`placed-icon${iconDef.shape === 'badge' ? ' placed-icon--badge' : ''}`}
       style={{
         left: `${x}%`,
         top: `${y}%`,
