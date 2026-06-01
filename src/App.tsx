@@ -66,10 +66,16 @@ export default function App() {
     return () => window.removeEventListener('paste', handlePaste);
   }, [handlePaste]);
 
-  const handleDropIcon = (iconDef: IconDef, x: number, y: number) =>
+  const handleDropIcon = (iconDef: IconDef, x: number, y: number, resolvedColor?: string) =>
     setPlacedIcons((prev) => [
       ...prev,
-      { id: crypto.randomUUID(), iconDef, instanceColor: resolveInstanceColor(iconDef, prev), x, y },
+      {
+        id: crypto.randomUUID(),
+        iconDef,
+        instanceColor: resolvedColor ?? resolveInstanceColor(iconDef, prev),
+        x,
+        y,
+      },
     ]);
 
   const handleMoveIcon = (id: string, x: number, y: number) =>
@@ -82,7 +88,7 @@ export default function App() {
     <div className="app">
       <aside className="sidebar">
         <h1 className="app-title">人狼ヘルパー</h1>
-        <IconPalette />
+        <IconPalette placedIcons={placedIcons} />
         <div className="controls">
           <label className="btn btn-primary">
             画像を選択

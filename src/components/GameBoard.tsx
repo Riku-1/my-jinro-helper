@@ -4,13 +4,13 @@ import type { IconDef } from '../constants/icons';
 import type { PlacedIcon as PlacedIconType } from '../App';
 
 type DragPayload =
-  | { type: 'new'; iconDef: IconDef }
+  | { type: 'new'; iconDef: IconDef; resolvedColor?: string }
   | { type: 'move'; id: string; offsetX: number; offsetY: number };
 
 type Props = {
   image: string | null;
   placedIcons: PlacedIconType[];
-  onDropIcon: (iconDef: IconDef, x: number, y: number) => void;
+  onDropIcon: (iconDef: IconDef, x: number, y: number, resolvedColor?: string) => void;
   onMoveIcon: (id: string, x: number, y: number) => void;
   onRemoveIcon: (id: string) => void;
 };
@@ -40,7 +40,7 @@ export default function GameBoard({ image, placedIcons, onDropIcon, onMoveIcon, 
     const { x, y } = getBoardRelativePos(e.clientX, e.clientY);
 
     if (parsed.type === 'new') {
-      onDropIcon(parsed.iconDef, clamp(x), clamp(y));
+      onDropIcon(parsed.iconDef, clamp(x), clamp(y), parsed.resolvedColor);
     } else if (parsed.type === 'move') {
       onMoveIcon(parsed.id, clamp(x - parsed.offsetX), clamp(y - parsed.offsetY));
     }

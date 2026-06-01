@@ -78,6 +78,26 @@
   transform: scale(0.95);
 }
 
+.result-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.result-row-label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  width: 26px;
+  flex-shrink: 0;
+}
+
+.result-placeholder {
+  font-size: 0.68rem;
+  color: #475569;
+  margin: 2px 0 0;
+}
+
 .palette-hint {
   font-size: 0.65rem;
   color: #475569;
