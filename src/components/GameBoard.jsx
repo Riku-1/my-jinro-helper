@@ -12,9 +12,10 @@ export default function GameBoard({ image, placedIcons, onDropIcon, onMoveIcon, 
     };
   };
 
+  const clamp = (v) => Math.max(0, Math.min(100, v));
+
   const handleDragOver = (e) => {
     e.preventDefault();
-    e.dataTransfer.dropEffect = 'copy';
   };
 
   const handleDrop = (e) => {
@@ -25,13 +26,14 @@ export default function GameBoard({ image, placedIcons, onDropIcon, onMoveIcon, 
     const { x, y } = getBoardRelativePos(e.clientX, e.clientY);
 
     if (parsed.type === 'new') {
-      onDropIcon(parsed.iconDef, x, y);
+      onDropIcon(parsed.iconDef, clamp(x), clamp(y));
     } else if (parsed.type === 'move') {
-      onMoveIcon(parsed.id, x - parsed.offsetX, y - parsed.offsetY);
+      onMoveIcon(parsed.id, clamp(x - parsed.offsetX), clamp(y - parsed.offsetY));
     }
   };
 
   const handleIconDragStart = (e, icon) => {
+    e.stopPropagation();
     const { x: cursorX, y: cursorY } = getBoardRelativePos(e.clientX, e.clientY);
     e.dataTransfer.setData('application/json', JSON.stringify({
       type: 'move',
@@ -39,7 +41,7 @@ export default function GameBoard({ image, placedIcons, onDropIcon, onMoveIcon, 
       offsetX: cursorX - icon.x,
       offsetY: cursorY - icon.y,
     }));
-    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.effectAllowed = 'copyMove';
   };
 
   if (!image) {
