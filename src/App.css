@@ -343,12 +343,12 @@
 .placed-comment {
   position: absolute;
   transform: translate(-50%, -50%);
-  padding: 3px 7px;
-  background: #fef08a;
-  color: #1c1917;
-  border: 1px solid #eab308;
-  border-radius: 5px;
-  font-size: 0.75rem;
+  padding: 10px 20px;
+  background: #000;
+  color: #fff;
+  border: 1px solid #475569;
+  border-radius: 0;
+  font-size: 1.5rem;
   font-weight: 600;
   white-space: nowrap;
   cursor: grab;
