@@ -1,7 +1,7 @@
-import { ICON_CATEGORIES } from '../constants/icons';
+import { ICON_CATEGORIES, type IconDef } from '../constants/icons';
 
 export default function IconPalette() {
-  const handleDragStart = (e, iconDef) => {
+  const handleDragStart = (e: React.DragEvent, iconDef: IconDef) => {
     e.dataTransfer.setData('application/json', JSON.stringify({ type: 'new', iconDef }));
     e.dataTransfer.effectAllowed = 'copy';
   };

@@ -1,6 +1,13 @@
 import { useState } from 'react';
+import type { PlacedIcon as PlacedIconType } from '../App';
 
-export default function PlacedIcon({ icon, onDragStart, onRemove }) {
+type Props = {
+  icon: PlacedIconType;
+  onDragStart: (e: React.DragEvent, icon: PlacedIconType) => void;
+  onRemove: () => void;
+};
+
+export default function PlacedIcon({ icon, onDragStart, onRemove }: Props) {
   const { iconDef, x, y } = icon;
   const [dragging, setDragging] = useState(false);
 

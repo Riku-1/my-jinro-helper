@@ -1,38 +1,54 @@
 import { useState, useEffect, useCallback } from 'react';
 import IconPalette from './components/IconPalette';
 import GameBoard from './components/GameBoard';
+import type { IconDef } from './constants/icons';
 import './App.css';
 
 const STORAGE_KEY = 'jinro-helper-v1';
 
-function loadState() {
+export type PlacedIcon = {
+  id: string;
+  iconDef: IconDef;
+  x: number;
+  y: number;
+};
+
+type SavedState = {
+  boardImage: string | null;
+  placedIcons: PlacedIcon[];
+};
+
+function loadState(): SavedState {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : { boardImage: null, placedIcons: [] };
+    return raw ? (JSON.parse(raw) as SavedState) : { boardImage: null, placedIcons: [] };
   } catch {
     return { boardImage: null, placedIcons: [] };
   }
 }
 
 export default function App() {
-  const [boardImage, setBoardImage] = useState(() => loadState().boardImage);
-  const [placedIcons, setPlacedIcons] = useState(() => loadState().placedIcons);
+  const [boardImage, setBoardImage] = useState<string | null>(() => loadState().boardImage);
+  const [placedIcons, setPlacedIcons] = useState<PlacedIcon[]>(() => loadState().placedIcons);
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify({ boardImage, placedIcons }));
   }, [boardImage, placedIcons]);
 
-  const readImageFile = (file) => {
+  const readImageFile = (file: File | null | undefined) => {
     if (!file || !file.type.startsWith('image/')) return;
     const reader = new FileReader();
-    reader.onload = (ev) => setBoardImage(ev.target.result);
+    reader.onload = (ev) => setBoardImage(ev.target?.result as string);
     reader.readAsDataURL(file);
   };
 
-  const handleImageUpload = (e) => readImageFile(e.target.files[0]);
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) =>
+    readImageFile(e.target.files?.[0]);
 
-  const handlePaste = useCallback((e) => {
-    const item = Array.from(e.clipboardData.items).find((i) => i.type.startsWith('image/'));
+  const handlePaste = useCallback((e: ClipboardEvent) => {
+    const item = Array.from(e.clipboardData?.items ?? []).find((i) =>
+      i.type.startsWith('image/'),
+    );
     if (item) readImageFile(item.getAsFile());
   }, []);
 
@@ -41,13 +57,13 @@ export default function App() {
     return () => window.removeEventListener('paste', handlePaste);
   }, [handlePaste]);
 
-  const handleDropIcon = (iconDef, x, y) =>
+  const handleDropIcon = (iconDef: IconDef, x: number, y: number) =>
     setPlacedIcons((prev) => [...prev, { id: crypto.randomUUID(), iconDef, x, y }]);
 
-  const handleMoveIcon = (id, x, y) =>
+  const handleMoveIcon = (id: string, x: number, y: number) =>
     setPlacedIcons((prev) => prev.map((icon) => (icon.id === id ? { ...icon, x, y } : icon)));
 
-  const handleRemoveIcon = (id) =>
+  const handleRemoveIcon = (id: string) =>
     setPlacedIcons((prev) => prev.filter((icon) => icon.id !== id));
 
   return (

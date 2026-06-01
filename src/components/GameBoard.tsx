@@ -1,28 +1,42 @@
 import { useRef } from 'react';
 import PlacedIcon from './PlacedIcon';
+import type { IconDef } from '../constants/icons';
+import type { PlacedIcon as PlacedIconType } from '../App';
 
-export default function GameBoard({ image, placedIcons, onDropIcon, onMoveIcon, onRemoveIcon }) {
-  const boardRef = useRef(null);
+type DragPayload =
+  | { type: 'new'; iconDef: IconDef }
+  | { type: 'move'; id: string; offsetX: number; offsetY: number };
 
-  const getBoardRelativePos = (clientX, clientY) => {
-    const rect = boardRef.current.getBoundingClientRect();
+type Props = {
+  image: string | null;
+  placedIcons: PlacedIconType[];
+  onDropIcon: (iconDef: IconDef, x: number, y: number) => void;
+  onMoveIcon: (id: string, x: number, y: number) => void;
+  onRemoveIcon: (id: string) => void;
+};
+
+export default function GameBoard({ image, placedIcons, onDropIcon, onMoveIcon, onRemoveIcon }: Props) {
+  const boardRef = useRef<HTMLDivElement>(null);
+
+  const getBoardRelativePos = (clientX: number, clientY: number) => {
+    const rect = boardRef.current!.getBoundingClientRect();
     return {
       x: ((clientX - rect.left) / rect.width) * 100,
       y: ((clientY - rect.top) / rect.height) * 100,
     };
   };
 
-  const clamp = (v) => Math.max(0, Math.min(100, v));
+  const clamp = (v: number) => Math.max(0, Math.min(100, v));
 
-  const handleDragOver = (e) => {
+  const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
   };
 
-  const handleDrop = (e) => {
+  const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     const raw = e.dataTransfer.getData('application/json');
     if (!raw) return;
-    const parsed = JSON.parse(raw);
+    const parsed = JSON.parse(raw) as DragPayload;
     const { x, y } = getBoardRelativePos(e.clientX, e.clientY);
 
     if (parsed.type === 'new') {
@@ -32,15 +46,16 @@ export default function GameBoard({ image, placedIcons, onDropIcon, onMoveIcon, 
     }
   };
 
-  const handleIconDragStart = (e, icon) => {
+  const handleIconDragStart = (e: React.DragEvent, icon: PlacedIconType) => {
     e.stopPropagation();
     const { x: cursorX, y: cursorY } = getBoardRelativePos(e.clientX, e.clientY);
-    e.dataTransfer.setData('application/json', JSON.stringify({
+    const payload: DragPayload = {
       type: 'move',
       id: icon.id,
       offsetX: cursorX - icon.x,
       offsetY: cursorY - icon.y,
-    }));
+    };
+    e.dataTransfer.setData('application/json', JSON.stringify(payload));
     e.dataTransfer.effectAllowed = 'copyMove';
   };
 
