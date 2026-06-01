@@ -1,21 +1,32 @@
 import { useRef } from 'react';
 import PlacedIcon from './PlacedIcon';
+import PlacedComment from './PlacedComment';
 import type { IconDef } from '../constants/icons';
-import type { PlacedIcon as PlacedIconType } from '../App';
+import type { PlacedIcon as PlacedIconType, PlacedComment as PlacedCommentType } from '../App';
 
 type DragPayload =
   | { type: 'new'; iconDef: IconDef; resolvedColor?: string }
-  | { type: 'move'; id: string; offsetX: number; offsetY: number };
+  | { type: 'new-comment'; text: string }
+  | { type: 'move'; id: string; offsetX: number; offsetY: number }
+  | { type: 'move-comment'; id: string; offsetX: number; offsetY: number };
 
 type Props = {
   image: string | null;
   placedIcons: PlacedIconType[];
+  placedComments: PlacedCommentType[];
   onDropIcon: (iconDef: IconDef, x: number, y: number, resolvedColor?: string) => void;
   onMoveIcon: (id: string, x: number, y: number) => void;
   onRemoveIcon: (id: string) => void;
+  onDropComment: (text: string, x: number, y: number) => void;
+  onMoveComment: (id: string, x: number, y: number) => void;
+  onRemoveComment: (id: string) => void;
 };
 
-export default function GameBoard({ image, placedIcons, onDropIcon, onMoveIcon, onRemoveIcon }: Props) {
+export default function GameBoard({
+  image, placedIcons, placedComments,
+  onDropIcon, onMoveIcon, onRemoveIcon,
+  onDropComment, onMoveComment, onRemoveComment,
+}: Props) {
   const boardRef = useRef<HTMLDivElement>(null);
 
   const getBoardRelativePos = (clientX: number, clientY: number) => {
@@ -41,8 +52,12 @@ export default function GameBoard({ image, placedIcons, onDropIcon, onMoveIcon, 
 
     if (parsed.type === 'new') {
       onDropIcon(parsed.iconDef, clamp(x), clamp(y), parsed.resolvedColor);
+    } else if (parsed.type === 'new-comment') {
+      onDropComment(parsed.text, clamp(x), clamp(y));
     } else if (parsed.type === 'move') {
       onMoveIcon(parsed.id, clamp(x - parsed.offsetX), clamp(y - parsed.offsetY));
+    } else if (parsed.type === 'move-comment') {
+      onMoveComment(parsed.id, clamp(x - parsed.offsetX), clamp(y - parsed.offsetY));
     }
   };
 
@@ -54,6 +69,19 @@ export default function GameBoard({ image, placedIcons, onDropIcon, onMoveIcon, 
       id: icon.id,
       offsetX: cursorX - icon.x,
       offsetY: cursorY - icon.y,
+    };
+    e.dataTransfer.setData('application/json', JSON.stringify(payload));
+    e.dataTransfer.effectAllowed = 'copyMove';
+  };
+
+  const handleCommentDragStart = (e: React.DragEvent, comment: PlacedCommentType) => {
+    e.stopPropagation();
+    const { x: cursorX, y: cursorY } = getBoardRelativePos(e.clientX, e.clientY);
+    const payload: DragPayload = {
+      type: 'move-comment',
+      id: comment.id,
+      offsetX: cursorX - comment.x,
+      offsetY: cursorY - comment.y,
     };
     e.dataTransfer.setData('application/json', JSON.stringify(payload));
     e.dataTransfer.effectAllowed = 'copyMove';
@@ -84,6 +112,14 @@ export default function GameBoard({ image, placedIcons, onDropIcon, onMoveIcon, 
           icon={icon}
           onDragStart={handleIconDragStart}
           onRemove={() => onRemoveIcon(icon.id)}
+        />
+      ))}
+      {placedComments.map((comment) => (
+        <PlacedComment
+          key={comment.id}
+          comment={comment}
+          onDragStart={handleCommentDragStart}
+          onRemove={() => onRemoveComment(comment.id)}
         />
       ))}
     </div>

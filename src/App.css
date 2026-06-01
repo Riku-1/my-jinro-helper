@@ -171,7 +171,7 @@
 
 .board-image {
   display: block;
-  max-width: calc(100vw - 232px);
+  max-width: calc(100vw - 424px);
   max-height: calc(100vh - 32px);
   border-radius: 4px;
   object-fit: contain;
@@ -226,4 +226,82 @@
   padding: 0;
   font-size: 0.9rem;
   letter-spacing: 0.05em;
+}
+
+/* ── Right sidebar ───────────────────────────── */
+.right-sidebar {
+  width: 160px;
+  flex-shrink: 0;
+  background: #1a2535;
+  padding: 14px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow-y: auto;
+  border-left: 1px solid #334155;
+}
+
+.sidebar-subtitle {
+  font-size: 0.7rem;
+  color: #64748b;
+  text-align: center;
+  margin: -8px 0 0;
+  letter-spacing: 0.1em;
+}
+
+.comment-list {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.comment-chip {
+  padding: 5px 8px;
+  background: #fef08a;
+  color: #1c1917;
+  border: 1px solid #eab308;
+  border-radius: 5px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: grab;
+  user-select: none;
+  transition: opacity 0.1s, transform 0.1s;
+}
+
+.comment-chip:hover {
+  opacity: 0.85;
+  transform: scale(1.03);
+}
+
+.comment-chip:active {
+  cursor: grabbing;
+}
+
+/* ── Placed comments ─────────────────────────── */
+.placed-comment {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  padding: 3px 7px;
+  background: #fef08a;
+  color: #1c1917;
+  border: 1px solid #eab308;
+  border-radius: 5px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: grab;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+  z-index: 10;
+  transition: box-shadow 0.1s, transform 0.1s;
+  pointer-events: auto;
+}
+
+.placed-comment:hover {
+  box-shadow: 0 0 0 2px #fff, 0 2px 8px rgba(0, 0, 0, 0.5);
+  z-index: 20;
+  transform: translate(-50%, -50%) scale(1.08);
+}
+
+.placed-comment:active {
+  cursor: grabbing;
 }
