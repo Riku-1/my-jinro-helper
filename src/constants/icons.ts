@@ -18,9 +18,9 @@ export const ICON_CATEGORIES: IconCategory[] = [
   {
     label: '役職CO',
     icons: [
-      { id: 'seer',   label: '占', color: '#2563eb', colors: ['#2563eb', '#0284c7', '#0d9488'], textColor: '#fff', title: '占い師' },
-      { id: 'medium', label: '霊', color: '#7c3aed', colors: ['#7c3aed', '#c026d3', '#9f1239'], textColor: '#fff', title: '霊媒師' },
-      { id: 'hunter', label: '狩', color: '#65a30d', colors: ['#65a30d', '#d97706', '#ea580c'], textColor: '#fff', title: '狩人' },
+      { id: 'seer',   label: '占', color: '#1d4ed8', colors: ['#1d4ed8', '#dc2626', '#d97706'], textColor: '#fff', title: '占い師' },
+      { id: 'medium', label: '霊', color: '#7e22ce', colors: ['#7e22ce', '#0f766e', '#c2410c'], textColor: '#fff', title: '霊媒師' },
+      { id: 'hunter', label: '狩', color: '#4d7c0f', colors: ['#4d7c0f', '#be185d', '#1e3a8a'], textColor: '#fff', title: '狩人' },
     ],
   },
   {
