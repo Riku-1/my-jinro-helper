@@ -4,7 +4,6 @@ export const ICON_CATEGORIES = [
     icons: [
       { id: 'seer',     label: '占', color: '#3b82f6', textColor: '#fff', title: '占い師' },
       { id: 'medium',   label: '霊', color: '#8b5cf6', textColor: '#fff', title: '霊媒師' },
-      { id: 'knight',   label: '騎', color: '#f59e0b', textColor: '#fff', title: '騎士' },
       { id: 'hunter',   label: '狩', color: '#84cc16', textColor: '#fff', title: '狩人' },
     ],
   },
