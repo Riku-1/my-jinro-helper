@@ -2,6 +2,7 @@ export type IconDef = {
   id: string;
   label: string;
   color: string;
+  colors?: string[];  // CO順の色シーケンス（役職COアイコンのみ）
   textColor: string;
   title: string;
   border?: string;
@@ -17,9 +18,9 @@ export const ICON_CATEGORIES: IconCategory[] = [
   {
     label: '役職CO',
     icons: [
-      { id: 'seer',   label: '占', color: '#3b82f6', textColor: '#fff', title: '占い師' },
-      { id: 'medium', label: '霊', color: '#8b5cf6', textColor: '#fff', title: '霊媒師' },
-      { id: 'hunter', label: '狩', color: '#84cc16', textColor: '#fff', title: '狩人' },
+      { id: 'seer',   label: '占', color: '#2563eb', colors: ['#2563eb', '#0284c7', '#0d9488'], textColor: '#fff', title: '占い師' },
+      { id: 'medium', label: '霊', color: '#7c3aed', colors: ['#7c3aed', '#c026d3', '#9f1239'], textColor: '#fff', title: '霊媒師' },
+      { id: 'hunter', label: '狩', color: '#65a30d', colors: ['#65a30d', '#d97706', '#ea580c'], textColor: '#fff', title: '狩人' },
     ],
   },
   {

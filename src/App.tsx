@@ -9,6 +9,7 @@ const STORAGE_KEY = 'jinro-helper-v1';
 export type PlacedIcon = {
   id: string;
   iconDef: IconDef;
+  instanceColor: string;
   x: number;
   y: number;
 };
@@ -17,6 +18,14 @@ type SavedState = {
   boardImage: string | null;
   placedIcons: PlacedIcon[];
 };
+
+function resolveInstanceColor(iconDef: IconDef, prev: PlacedIcon[]): string {
+  if (!iconDef.colors) return iconDef.color;
+  const count = prev.filter((p) => p.iconDef.id === iconDef.id).length;
+  if (count < iconDef.colors.length) return iconDef.colors[count];
+  const hue = Math.floor(Math.random() * 360);
+  return `hsl(${hue}, 70%, 40%)`;
+}
 
 function loadState(): SavedState {
   try {
@@ -58,7 +67,10 @@ export default function App() {
   }, [handlePaste]);
 
   const handleDropIcon = (iconDef: IconDef, x: number, y: number) =>
-    setPlacedIcons((prev) => [...prev, { id: crypto.randomUUID(), iconDef, x, y }]);
+    setPlacedIcons((prev) => [
+      ...prev,
+      { id: crypto.randomUUID(), iconDef, instanceColor: resolveInstanceColor(iconDef, prev), x, y },
+    ]);
 
   const handleMoveIcon = (id: string, x: number, y: number) =>
     setPlacedIcons((prev) => prev.map((icon) => (icon.id === id ? { ...icon, x, y } : icon)));

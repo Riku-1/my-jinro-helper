@@ -17,7 +17,7 @@ export default function PlacedIcon({ icon, onDragStart, onRemove }: Props) {
       style={{
         left: `${x}%`,
         top: `${y}%`,
-        backgroundColor: iconDef.color,
+        backgroundColor: icon.instanceColor,
         color: iconDef.textColor,
         border: iconDef.border ? `2px solid ${iconDef.border}` : '2px solid transparent',
         opacity: dragging ? 0.4 : 1,
