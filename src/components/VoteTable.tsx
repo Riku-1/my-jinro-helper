@@ -67,13 +67,13 @@ export default function VoteTable({
         <button
           className={`vote-day-tab vote-day-tab--memo${contentMode === 'memo' && selectedMemoDay === 'all' ? ' vote-day-tab--memo-active' : ''}`}
           onClick={() => { setContentMode('memo'); setSelectedMemoDay('all'); }}
-        >全体メモ</button>
+        >全体</button>
         {dayLabels.map((label, d) => (
           <button
             key={d}
             className={`vote-day-tab vote-day-tab--memo${contentMode === 'memo' && selectedMemoDay === d ? ' vote-day-tab--memo-active' : ''}`}
             onClick={() => { setContentMode('memo'); setSelectedMemoDay(d); }}
-          >{label} メモ</button>
+          >{label}</button>
         ))}
       </div>
 

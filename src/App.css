@@ -361,10 +361,10 @@
 
 .vote-day-tab--memo:hover { color: #d6d3d1; }
 
-.vote-day-tab--memo-active {
-  background: #d97706;
+.vote-day-tab.vote-day-tab--memo-active {
+  background: #dc2626;
   color: #fff;
-  border-color: #d97706;
+  border-color: #dc2626;
 }
 
 .vote-day-tab {
