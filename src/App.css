@@ -344,6 +344,28 @@
 
 .vote-add-btn:hover { color: #93c5fd; background: #1e293b; }
 
+.vote-player-name-ro {
+  color: #e2e8f0;
+  font-size: 0.85rem;
+}
+
+.player-manager {
+  flex: 1;
+  overflow: auto;
+  padding: 24px;
+  background: #0f172a;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.player-manager-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #94a3b8;
+  margin: 0;
+}
+
 .vote-add-player-btn {
   align-self: flex-start;
   padding: 6px 14px;
@@ -357,6 +379,20 @@
 }
 
 .vote-add-player-btn:hover { opacity: 0.8; }
+
+.board-top {
+  flex: 6;
+  min-height: 0;
+  overflow: hidden;
+  position: relative;
+}
+
+.board-bottom {
+  flex: 4;
+  min-height: 0;
+  overflow: hidden;
+  border-top: 1px solid #1e293b;
+}
 
 .board-viewport {
   width: 100%;

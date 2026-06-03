@@ -4,6 +4,7 @@ import GameBoard from './components/GameBoard';
 import CommentSidebar from './components/CommentSidebar';
 import GameTabs from './components/GameTabs';
 import VoteTable from './components/VoteTable';
+import PlayerManager from './components/PlayerManager';
 import type { IconDef } from './constants/icons';
 import './App.css';
 
@@ -298,25 +299,34 @@ export default function App() {
           onSetView={setViewMode}
         />
         {viewMode === 'board' ? (
-          <GameBoard
-            image={activeGame.boardImage}
-            placedIcons={activeGame.placedIcons}
-            placedComments={activeGame.placedComments}
-            onDropIcon={handleDropIcon}
-            onMoveIcon={handleMoveIcon}
-            onRemoveIcon={handleRemoveIcon}
-            onDropComment={handleDropComment}
-            onMoveComment={handleMoveComment}
-            onRemoveComment={handleRemoveComment}
-          />
+          <>
+            <div className="board-top">
+              <GameBoard
+                image={activeGame.boardImage}
+                placedIcons={activeGame.placedIcons}
+                placedComments={activeGame.placedComments}
+                onDropIcon={handleDropIcon}
+                onMoveIcon={handleMoveIcon}
+                onRemoveIcon={handleRemoveIcon}
+                onDropComment={handleDropComment}
+                onMoveComment={handleMoveComment}
+                onRemoveComment={handleRemoveComment}
+              />
+            </div>
+            <div className="board-bottom">
+              <VoteTable
+                players={activeGame.players}
+                voteTable={activeGame.voteTable}
+                onUpdateVote={handleUpdateVote}
+                onAddDay={handleAddDay}
+                onRemoveDay={handleRemoveDay}
+              />
+            </div>
+          </>
         ) : (
-          <VoteTable
+          <PlayerManager
             players={activeGame.players}
-            voteTable={activeGame.voteTable}
-            onUpdateVote={handleUpdateVote}
-            onAddDay={handleAddDay}
             onAddPlayer={handleAddPlayer}
-            onRemoveDay={handleRemoveDay}
             onRemovePlayer={handleRemovePlayer}
             onUpdatePlayer={handleUpdatePlayer}
           />

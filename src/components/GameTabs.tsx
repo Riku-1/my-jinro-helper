@@ -54,7 +54,7 @@ export default function GameTabs({
         <button
           className={`view-toggle-btn${viewMode === 'vote' ? ' view-toggle-btn--active' : ''}`}
           onClick={() => onSetView('vote')}
-        >投票履歴</button>
+        >プレイヤー管理</button>
       </div>
     </div>
   );
