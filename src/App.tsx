@@ -59,7 +59,7 @@ function newGame(name: string): Game {
   return {
     id: crypto.randomUUID(), name,
     boardImage: null, placedIcons: [], placedComments: [],
-    players: [], voteTable: [],
+    players: [], voteTable: Array.from({ length: 5 }, () => []),
   };
 }
 
@@ -78,7 +78,7 @@ function loadState(): AppState {
       const parsed = JSON.parse(raw2) as AppState;
       // Ensure new fields exist on old saves
       parsed.games = parsed.games.map((g) => ({
-        players: [], voteTable: [], ...g,
+        players: [], voteTable: Array.from({ length: 5 }, () => []), ...g,
       }));
       return parsed;
     }
