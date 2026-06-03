@@ -104,6 +104,8 @@ export default function App() {
   const [undoStack, setUndoStack]       = useState<HistoryEntry[]>([]);
   const [redoStack, setRedoStack]       = useState<HistoryEntry[]>([]);
   const [viewMode, setViewMode]         = useState<ViewMode>('board');
+  const [splitRatio, setSplitRatio]     = useState(0.6);
+  const boardContentRef = useRef<HTMLDivElement>(null);
 
   const activeGameIdRef = useRef(activeGameId);
   useEffect(() => { activeGameIdRef.current = activeGameId; }, [activeGameId]);
@@ -314,6 +316,25 @@ export default function App() {
     });
   };
 
+  const handleDividerMouseDown = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    document.body.style.cursor      = 'row-resize';
+    document.body.style.userSelect  = 'none';
+    const onMouseMove = (ev: MouseEvent) => {
+      if (!boardContentRef.current) return;
+      const rect = boardContentRef.current.getBoundingClientRect();
+      setSplitRatio(Math.max(0.15, Math.min(0.85, (ev.clientY - rect.top) / rect.height)));
+    };
+    const onMouseUp = () => {
+      document.body.style.cursor     = '';
+      document.body.style.userSelect = '';
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onMouseUp);
+    };
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mouseup', onMouseUp);
+  }, []);
+
   const hasAnyPlacement = activeGame.placedIcons.length > 0 || activeGame.placedComments.length > 0;
 
   return (
@@ -355,8 +376,8 @@ export default function App() {
           onSetView={setViewMode}
         />
         {viewMode === 'board' ? (
-          <>
-            <div className="board-top">
+          <div className="board-content" ref={boardContentRef}>
+            <div className="board-top" style={{ flex: splitRatio }}>
               <GameBoard
                 image={activeGame.boardImage}
                 placedIcons={activeGame.placedIcons}
@@ -369,7 +390,8 @@ export default function App() {
                 onRemoveComment={handleRemoveComment}
               />
             </div>
-            <div className="board-bottom">
+            <div className="board-divider" onMouseDown={handleDividerMouseDown} />
+            <div className="board-bottom" style={{ flex: 1 - splitRatio }}>
               <VoteTable
                 players={activeGame.players}
                 voteTable={activeGame.voteTable}
@@ -378,7 +400,7 @@ export default function App() {
                 onRemoveDay={handleRemoveDay}
               />
             </div>
-          </>
+          </div>
         ) : (
           <PlayerManager
             players={activeGame.players}

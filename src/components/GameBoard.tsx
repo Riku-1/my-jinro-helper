@@ -10,8 +10,6 @@ type DragPayload =
   | { type: 'move'; id: string; offsetX: number; offsetY: number }
   | { type: 'move-comment'; id: string; offsetX: number; offsetY: number };
 
-type Transform = { x: number; y: number; scale: number };
-
 type Props = {
   image: string | null;
   placedIcons: PlacedIconType[];
@@ -29,64 +27,16 @@ export default function GameBoard({
   onDropIcon, onMoveIcon, onRemoveIcon,
   onDropComment, onMoveComment, onRemoveComment,
 }: Props) {
-  const boardRef    = useRef<HTMLDivElement>(null);
-  const viewportRef = useRef<HTMLDivElement>(null);
+  const boardRef = useRef<HTMLDivElement>(null);
+  const [aspectRatio, setAspectRatio] = useState<number | null>(null);
 
-  const [tf, setTf]           = useState<Transform>({ x: 0, y: 0, scale: 1 });
-  const [isPanning, setPanning] = useState(false);
-  const panOrigin = useRef({ x: 0, y: 0 });
+  useEffect(() => { setAspectRatio(null); }, [image]);
 
-  // Reset transform when image is cleared
-  useEffect(() => {
-    if (!image) setTf({ x: 0, y: 0, scale: 1 });
-  }, [image]);
-
-  // Non-passive wheel listener for zoom
-  useEffect(() => {
-    const el = viewportRef.current;
-    if (!el) return;
-    const onWheel = (e: WheelEvent) => {
-      e.preventDefault();
-      const factor = e.deltaY < 0 ? 1.1 : 1 / 1.1;
-      const vp = el.getBoundingClientRect();
-      const cx = e.clientX - vp.left;
-      const cy = e.clientY - vp.top;
-      setTf((prev) => {
-        const newScale = Math.max(0.1, Math.min(20, prev.scale * factor));
-        const ratio = newScale / prev.scale;
-        return { x: cx - (cx - prev.x) * ratio, y: cy - (cy - prev.y) * ratio, scale: newScale };
-      });
-    };
-    el.addEventListener('wheel', onWheel, { passive: false });
-    return () => el.removeEventListener('wheel', onWheel);
-  }, []);
-
-  // Center board after image renders
   const handleImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
-    const vp = viewportRef.current;
-    if (!vp) return;
-    const vpRect = vp.getBoundingClientRect();
     const img = e.currentTarget;
-    setTf({ x: (vpRect.width - img.offsetWidth) / 2, y: (vpRect.height - img.offsetHeight) / 2, scale: 1 });
+    setAspectRatio(img.naturalWidth / img.naturalHeight);
   };
 
-  // Pan handlers
-  const handleMouseDown = (e: React.MouseEvent) => {
-    const el = e.target as HTMLElement;
-    if (!el.classList.contains('game-board') && !el.classList.contains('board-image')) return;
-    e.preventDefault();
-    setPanning(true);
-    panOrigin.current = { x: e.clientX - tf.x, y: e.clientY - tf.y };
-  };
-
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (!isPanning) return;
-    setTf((prev) => ({ ...prev, x: e.clientX - panOrigin.current.x, y: e.clientY - panOrigin.current.y }));
-  };
-
-  const handleMouseUp = () => setPanning(false);
-
-  // getBoundingClientRect already accounts for CSS transform, so % math is correct as-is
   const getBoardRelativePos = (clientX: number, clientY: number) => {
     const rect = boardRef.current!.getBoundingClientRect();
     return {
@@ -145,29 +95,15 @@ export default function GameBoard({
   }
 
   return (
-    <div
-      ref={viewportRef}
-      className="board-viewport"
-      onMouseDown={handleMouseDown}
-      onMouseMove={handleMouseMove}
-      onMouseUp={handleMouseUp}
-      onMouseLeave={handleMouseUp}
-      style={{ cursor: isPanning ? 'grabbing' : 'default' }}
-    >
+    <div className="board-viewport">
       <div
         ref={boardRef}
         className="game-board"
-        style={{ transform: `translate(${tf.x}px, ${tf.y}px) scale(${tf.scale})`, transformOrigin: '0 0' }}
+        style={aspectRatio ? { aspectRatio: String(aspectRatio) } : undefined}
         onDragOver={handleDragOver}
         onDrop={handleDrop}
       >
-        <img
-          src={image}
-          alt="board"
-          className="board-image"
-          draggable={false}
-          onLoad={handleImageLoad}
-        />
+        <img src={image} alt="board" className="board-image" draggable={false} onLoad={handleImageLoad} />
         {placedIcons.map((icon) => (
           <PlacedIcon key={icon.id} icon={icon} onDragStart={handleIconDragStart} onRemove={() => onRemoveIcon(icon.id)} />
         ))}
