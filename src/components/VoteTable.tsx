@@ -25,6 +25,7 @@ export default function VoteTable({
   const days = voteTable.length;
 
   const handleRemoveDay = (d: number) => {
+    if (!window.confirm(`${d + 1}日目を削除しますか？`)) return;
     onRemoveDay(d);
     if (selectedVoteDay === d) setSelectedVoteDay('all');
     else if (typeof selectedVoteDay === 'number' && selectedVoteDay > d) setSelectedVoteDay(selectedVoteDay - 1);
@@ -90,11 +91,13 @@ export default function VoteTable({
             onClick={() => { setContentMode('vote'); setSelectedVoteDay(d); }}
           >
             {label}
-            <span
-              className="vote-day-tab-del"
-              onClick={(e) => { e.stopPropagation(); handleRemoveDay(d); }}
-              title="この日を削除"
-            >×</span>
+            {d === days - 1 && (
+              <span
+                className="vote-day-tab-del"
+                onClick={(e) => { e.stopPropagation(); handleRemoveDay(d); }}
+                title="この日を削除"
+              >×</span>
+            )}
           </button>
         ))}
         <button className="vote-add-btn" onClick={onAddDay}>＋ 日を追加</button>
@@ -167,7 +170,7 @@ export default function VoteTable({
               value={dayMemos[selectedMemoDay] ?? ''}
               onChange={(e) => onUpdateMemo(selectedMemoDay, e.target.value)}
               placeholder="この日のメモを入力..."
-              rows={4}
+              rows={40}
             />
           </div>
         )
