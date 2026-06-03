@@ -395,6 +395,7 @@ export default function App() {
           <div className="board-content" ref={boardContentRef}>
             <div className="board-top" style={{ flex: splitRatio }}>
               <GameBoard
+                layoutVersion={splitRatio}
                 image={activeGame.boardImage}
                 placedIcons={activeGame.placedIcons}
                 placedComments={activeGame.placedComments}

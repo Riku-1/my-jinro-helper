@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect, useMemo } from 'react';
+import { useRef, useState, useEffect, useMemo, useCallback, useLayoutEffect } from 'react';
 import PlacedIcon from './PlacedIcon';
 import PlacedComment from './PlacedComment';
 import type { IconDef } from '../constants/icons';
@@ -11,6 +11,7 @@ type DragPayload =
   | { type: 'move-comment'; id: string; offsetX: number; offsetY: number };
 
 type Props = {
+  layoutVersion?: number;
   image: string | null;
   placedIcons: PlacedIconType[];
   placedComments: PlacedCommentType[];
@@ -23,6 +24,7 @@ type Props = {
 };
 
 export default function GameBoard({
+  layoutVersion,
   image, placedIcons, placedComments,
   onDropIcon, onMoveIcon, onRemoveIcon,
   onDropComment, onMoveComment, onRemoveComment,
@@ -30,30 +32,40 @@ export default function GameBoard({
   const boardRef    = useRef<HTMLDivElement>(null);
   const viewportRef = useRef<HTMLDivElement>(null);
 
-  const [aspectRatio, setAspectRatio]                           = useState<number | null>(null);
-  const [viewportSize, setViewportSize]                         = useState<{ w: number; h: number } | null>(null);
+  const [aspectRatio, setAspectRatio] = useState<number | null>(null);
+  const [viewportSize, setViewportSize] = useState<{ w: number; h: number } | null>(null);
 
-  // Reset aspect ratio when image changes
   useEffect(() => { setAspectRatio(null); }, [image]);
 
-  // Track viewport size via ResizeObserver
-  useEffect(() => {
+  const readViewportSize = useCallback(() => {
     const el = viewportRef.current;
     if (!el) return;
-    const obs = new ResizeObserver((entries) => {
-      const { width, height } = entries[0].contentRect;
-      setViewportSize({ w: width, h: height });
-    });
-    obs.observe(el);
-    return () => obs.disconnect();
+    const { width, height } = el.getBoundingClientRect();
+    if (width > 0 && height > 0) {
+      setViewportSize(prev =>
+        prev && Math.abs(prev.w - width) < 0.5 && Math.abs(prev.h - height) < 0.5
+          ? prev
+          : { w: width, h: height }
+      );
+    }
   }, []);
+
+  // Re-measure when divider is dragged (layoutVersion) or image is set
+  useLayoutEffect(() => {
+    readViewportSize();
+  }, [layoutVersion, image, readViewportSize]);
+
+  // Re-measure on window resize
+  useEffect(() => {
+    window.addEventListener('resize', readViewportSize);
+    return () => window.removeEventListener('resize', readViewportSize);
+  }, [readViewportSize]);
 
   const handleImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
     const img = e.currentTarget;
     setAspectRatio(img.naturalWidth / img.naturalHeight);
   };
 
-  // Compute game-board pixel size to fill viewport while preserving aspect ratio
   const boardSize = useMemo(() => {
     if (!viewportSize || !aspectRatio) return null;
     const { w, h } = viewportSize;

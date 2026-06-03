@@ -680,7 +680,7 @@
   line-height: 0;
   user-select: none;
   flex-shrink: 0;
-  /* width / height set via inline style by ResizeObserver */
+  /* width / height set via inline style */
 }
 
 .board-image {
