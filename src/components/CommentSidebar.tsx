@@ -5,6 +5,7 @@ const DEFAULT_COMMENTS = [
   '真狂', '真狼', '狼', '狂人',
   'おかしい', '気になる', 'わからん',
   '盤面黒', '盤面白', '役目', '素村',
+  '偽', '真'
 ];
 
 export default function CommentSidebar() {
