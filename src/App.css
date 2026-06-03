@@ -349,6 +349,24 @@
   flex-shrink: 0;
 }
 
+.vote-day-tabs--memo {
+  padding-bottom: 2px;
+}
+
+.vote-day-tab--memo {
+  color: #78716c;
+  border-color: #44403c;
+  background: #1c1917;
+}
+
+.vote-day-tab--memo:hover { color: #d6d3d1; }
+
+.vote-day-tab--memo-active {
+  background: #d97706;
+  color: #fff;
+  border-color: #d97706;
+}
+
 .vote-day-tab {
   display: flex;
   align-items: center;
@@ -523,6 +541,64 @@
 }
 
 .import-cancel-btn:hover { opacity: 0.8; }
+
+.memo-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.memo-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.memo-textarea {
+  width: 100%;
+  background: #1e293b;
+  color: #f1f5f9;
+  border: 1px solid #334155;
+  border-radius: 5px;
+  padding: 8px 10px;
+  font-size: 0.85rem;
+  resize: vertical;
+  outline: none;
+  box-sizing: border-box;
+  font-family: inherit;
+}
+
+.memo-textarea:focus { border-color: #3b82f6; }
+.memo-textarea::placeholder { color: #475569; }
+
+.memo-all {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 12px;
+  background: #1e293b;
+  border-radius: 6px;
+  border: 1px solid #334155;
+}
+
+.memo-all-item {
+  display: flex;
+  gap: 10px;
+  font-size: 0.82rem;
+}
+
+.memo-all-label {
+  color: #93c5fd;
+  font-weight: 600;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.memo-all-text {
+  color: #e2e8f0;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
 
 .vote-add-player-btn {
   align-self: flex-start;

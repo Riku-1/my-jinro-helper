@@ -40,6 +40,7 @@ export type Game = {
   placedComments: PlacedComment[];
   players: Player[];
   voteTable: string[][];  // voteTable[dayIndex][playerIndex]
+  dayMemos: string[];     // dayMemos[dayIndex]
 };
 
 type AppState = {
@@ -59,7 +60,7 @@ function newGame(name: string): Game {
   return {
     id: crypto.randomUUID(), name,
     boardImage: null, placedIcons: [], placedComments: [],
-    players: [], voteTable: Array.from({ length: 5 }, () => []),
+    players: [], voteTable: Array.from({ length: 5 }, () => []), dayMemos: Array(5).fill(''),
   };
 }
 
@@ -78,7 +79,7 @@ function loadState(): AppState {
       const parsed = JSON.parse(raw2) as AppState;
       // Ensure new fields exist on old saves
       parsed.games = parsed.games.map((g) => ({
-        players: [], voteTable: Array.from({ length: 5 }, () => []), ...g,
+        players: [], voteTable: Array.from({ length: 5 }, () => []), dayMemos: Array(5).fill(''), ...g,
       }));
       return parsed;
     }
@@ -220,10 +221,25 @@ export default function App() {
     });
 
   const handleAddDay = () =>
-    updateActive((g) => ({ ...g, voteTable: [...g.voteTable, Array(g.players.length).fill('')] }));
+    updateActive((g) => ({
+      ...g,
+      voteTable: [...g.voteTable, Array(g.players.length).fill('')],
+      dayMemos: [...g.dayMemos, ''],
+    }));
 
   const handleRemoveDay = (day: number) =>
-    updateActive((g) => ({ ...g, voteTable: g.voteTable.filter((_, i) => i !== day) }));
+    updateActive((g) => ({
+      ...g,
+      voteTable: g.voteTable.filter((_, i) => i !== day),
+      dayMemos: g.dayMemos.filter((_, i) => i !== day),
+    }));
+
+  const handleUpdateMemo = (day: number, memo: string) =>
+    updateActive((g) => {
+      const dayMemos = [...g.dayMemos];
+      dayMemos[day] = memo;
+      return { ...g, dayMemos };
+    });
 
   const handleAddPlayer = () =>
     updateActive((g) => {
@@ -395,9 +411,11 @@ export default function App() {
               <VoteTable
                 players={activeGame.players}
                 voteTable={activeGame.voteTable}
+                dayMemos={activeGame.dayMemos}
                 onUpdateVote={handleUpdateVote}
                 onAddDay={handleAddDay}
                 onRemoveDay={handleRemoveDay}
+                onUpdateMemo={handleUpdateMemo}
               />
             </div>
           </div>
