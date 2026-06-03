@@ -18,7 +18,7 @@ export default function VoteTable({
   players, voteTable, dayMemos,
   onUpdateVote, onAddDay, onRemoveDay, onUpdateMemo,
 }: Props) {
-  const [contentMode, setContentMode]     = useState<ContentMode>('vote');
+  const [contentMode, setContentMode]     = useState<ContentMode>('memo');
   const [selectedVoteDay, setSelectedVoteDay] = useState<SelectedDay>('all');
   const [selectedMemoDay, setSelectedMemoDay] = useState<SelectedDay>('all');
 
