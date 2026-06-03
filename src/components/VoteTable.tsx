@@ -1,8 +1,7 @@
 import { useState } from 'react';
 import type { Player } from '../App';
 
-type EditingCell = { day: number; pi: number };
-type SelectedDay  = 'all' | number;
+type SelectedDay = 'all' | number;
 
 type Props = {
   players: Player[];
@@ -13,27 +12,9 @@ type Props = {
 };
 
 export default function VoteTable({ players, voteTable, onUpdateVote, onAddDay, onRemoveDay }: Props) {
-  const [editing, setEditing]         = useState<EditingCell | null>(null);
-  const [inputValue, setInputValue]   = useState('');
   const [selectedDay, setSelectedDay] = useState<SelectedDay>('all');
 
   const days = voteTable.length;
-
-  const startEdit = (cell: EditingCell, initial: string) => {
-    setEditing(cell);
-    setInputValue(initial);
-  };
-
-  const commitEdit = () => {
-    if (!editing) return;
-    onUpdateVote(editing.day, editing.pi, inputValue.trim());
-    setEditing(null);
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') commitEdit();
-    if (e.key === 'Escape') setEditing(null);
-  };
 
   const handleRemoveDay = (d: number) => {
     onRemoveDay(d);
@@ -41,29 +22,21 @@ export default function VoteTable({ players, voteTable, onUpdateVote, onAddDay, 
     else if (typeof selectedDay === 'number' && selectedDay > d) setSelectedDay(selectedDay - 1);
   };
 
-  const renderCell = (d: number, pi: number) => {
+  const renderVoteSelect = (d: number, pi: number) => {
     const val = voteTable[d]?.[pi] ?? '';
-    const isEditing = editing?.day === d && editing?.pi === pi;
     return (
-      <td
-        key={d}
-        className={`vote-td vote-td--cell${isEditing ? ' vote-td--editing' : ''}`}
-        onClick={() => !isEditing && startEdit({ day: d, pi }, val)}
-        title="クリックで編集"
+      <select
+        className="vote-select"
+        value={val}
+        onChange={(e) => onUpdateVote(d, pi, e.target.value)}
       >
-        {isEditing ? (
-          <input
-            className="vote-input vote-input--cell"
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            onBlur={commitEdit}
-            onKeyDown={handleKeyDown}
-            autoFocus
-          />
-        ) : (
-          val || <span className="vote-placeholder">-</span>
-        )}
-      </td>
+        <option value="">-</option>
+        {players.map((p) => (
+          <option key={p.number} value={String(p.number)}>
+            {p.number}{p.name ? ` ${p.name}` : ''}
+          </option>
+        ))}
+      </select>
     );
   };
 
@@ -97,10 +70,9 @@ export default function VoteTable({ players, voteTable, onUpdateVote, onAddDay, 
             >×</span>
           </button>
         ))}
-        <button className="vote-add-btn" onClick={onAddDay} title="日を追加">＋ 日を追加</button>
+        <button className="vote-add-btn" onClick={onAddDay}>＋ 日を追加</button>
       </div>
 
-      {/* テーブル */}
       {selectedDay === 'all' ? (
         /* 全体ビュー */
         <table className="vote-table">
@@ -119,7 +91,11 @@ export default function VoteTable({ players, voteTable, onUpdateVote, onAddDay, 
                   <span className="vote-player-num">{player.number}</span>
                   <span className="vote-player-name-ro">{player.name || <span className="vote-placeholder">—</span>}</span>
                 </td>
-                {Array.from({ length: days }, (_, d) => renderCell(d, pi))}
+                {Array.from({ length: days }, (_, d) => (
+                  <td key={d} className="vote-td vote-td--cell">
+                    {renderVoteSelect(d, pi)}
+                  </td>
+                ))}
                 <td className="vote-td vote-td--empty" />
               </tr>
             ))}
@@ -141,7 +117,9 @@ export default function VoteTable({ players, voteTable, onUpdateVote, onAddDay, 
                   <span className="vote-player-num">{player.number}</span>
                   <span className="vote-player-name-ro">{player.name || <span className="vote-placeholder">—</span>}</span>
                 </td>
-                {renderCell(selectedDay, pi)}
+                <td className="vote-td vote-td--cell">
+                  {renderVoteSelect(selectedDay, pi)}
+                </td>
               </tr>
             ))}
           </tbody>

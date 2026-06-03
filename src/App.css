@@ -274,13 +274,9 @@
 
 .vote-td--cell {
   text-align: center;
-  cursor: pointer;
-  min-width: 60px;
-  transition: background 0.1s;
+  min-width: 80px;
+  padding: 2px 4px;
 }
-
-.vote-td--cell:hover { background: #1e293b; }
-.vote-td--editing    { background: #1e293b; }
 
 .vote-td--empty { border-color: transparent; background: transparent; }
 
@@ -317,7 +313,20 @@
 
 .vote-input--num  { width: 36px; }
 .vote-input--name { width: 80px; }
-.vote-input--cell { width: 50px; text-align: center; }
+
+.vote-select {
+  width: 100%;
+  background: #1e293b;
+  color: #f1f5f9;
+  border: 1px solid #334155;
+  border-radius: 3px;
+  padding: 3px 4px;
+  font-size: 0.82rem;
+  outline: none;
+  cursor: pointer;
+}
+
+.vote-select:focus { border-color: #3b82f6; }
 
 .vote-del-btn {
   background: none;
