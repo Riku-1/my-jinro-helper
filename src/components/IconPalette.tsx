@@ -30,7 +30,7 @@ export default function IconPalette({ placedIcons }: Props) {
           onDragStart={(e) => handleDragStart(e, base, roleIcon.instanceColor)}
           style={{
             backgroundColor: roleIcon.instanceColor,
-            color: '#fff',
+            color: base.textColor,
             border: '2px solid transparent',
           }}
           title={`${roleIcon.iconDef.title} CO${index + 1}: ${base.title}`}

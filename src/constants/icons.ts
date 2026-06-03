@@ -15,11 +15,11 @@ export type IconCategory = {
 };
 
 export const WHITE_ICON_DEF: IconDef = {
-  id: 'white', label: '白', color: '#f8fafc', textColor: '#fff', title: '白判定',
+  id: 'white', label: '●', color: '#f8fafc', textColor: '#ffffff', title: '白判定',
 };
 
 export const BLACK_ICON_DEF: IconDef = {
-  id: 'black', label: '黒', color: '#1e293b', textColor: '#fff', title: '黒判定',
+  id: 'black', label: '●', color: '#1e293b', textColor: '#000000', title: '黒判定',
 };
 
 export const ICON_CATEGORIES: IconCategory[] = [
