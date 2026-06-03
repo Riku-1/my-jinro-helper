@@ -188,6 +188,176 @@
   border-color: #991b1b;
 }
 
+.view-toggle {
+  display: flex;
+  margin-left: auto;
+  border: 1px solid #334155;
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.view-toggle-btn {
+  padding: 4px 10px;
+  background: transparent;
+  color: #64748b;
+  border: none;
+  font-size: 0.78rem;
+  cursor: pointer;
+  transition: background 0.1s, color 0.1s;
+  white-space: nowrap;
+}
+
+.view-toggle-btn:hover { background: #1e293b; color: #94a3b8; }
+
+.view-toggle-btn--active {
+  background: #1e293b;
+  color: #f1f5f9;
+}
+
+/* ── Vote table ──────────────────────────────── */
+.vote-container {
+  flex: 1;
+  overflow: auto;
+  padding: 20px;
+  background: #0f172a;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.vote-empty {
+  color: #475569;
+  font-size: 0.85rem;
+  text-align: center;
+  margin-top: 40px;
+}
+
+.vote-table {
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.vote-th {
+  padding: 6px 10px;
+  background: #1e293b;
+  color: #94a3b8;
+  font-weight: 600;
+  border: 1px solid #334155;
+  white-space: nowrap;
+}
+
+.vote-th--player { min-width: 140px; text-align: left; }
+.vote-th--day    { min-width: 70px; text-align: center; }
+.vote-th--add    { background: transparent; border-color: transparent; }
+
+.vote-th--day {
+  position: relative;
+  padding-right: 20px;
+}
+
+.vote-td {
+  padding: 4px 8px;
+  border: 1px solid #1e293b;
+  color: #e2e8f0;
+  vertical-align: middle;
+}
+
+.vote-td--player {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #1e293b;
+  white-space: nowrap;
+  min-width: 140px;
+}
+
+.vote-td--cell {
+  text-align: center;
+  cursor: pointer;
+  min-width: 60px;
+  transition: background 0.1s;
+}
+
+.vote-td--cell:hover { background: #1e293b; }
+.vote-td--editing    { background: #1e293b; }
+
+.vote-td--empty { border-color: transparent; background: transparent; }
+
+.vote-player-num {
+  font-weight: 700;
+  color: #93c5fd;
+  cursor: pointer;
+  min-width: 20px;
+  display: inline-block;
+  text-align: right;
+}
+
+.vote-player-num:hover { text-decoration: underline; }
+
+.vote-player-name {
+  flex: 1;
+  cursor: pointer;
+  min-width: 60px;
+}
+
+.vote-player-name:hover { text-decoration: underline; }
+
+.vote-placeholder { color: #475569; font-style: italic; }
+
+.vote-input {
+  background: #0f172a;
+  color: #f1f5f9;
+  border: 1px solid #3b82f6;
+  border-radius: 3px;
+  outline: none;
+  padding: 2px 4px;
+  font-size: 0.85rem;
+}
+
+.vote-input--num  { width: 36px; }
+.vote-input--name { width: 80px; }
+.vote-input--cell { width: 50px; text-align: center; }
+
+.vote-del-btn {
+  background: none;
+  border: none;
+  color: #475569;
+  cursor: pointer;
+  font-size: 0.78rem;
+  padding: 0 2px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.vote-del-btn:hover { color: #f87171; }
+
+.vote-add-btn {
+  background: none;
+  border: none;
+  color: #475569;
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: color 0.1s, background 0.1s;
+}
+
+.vote-add-btn:hover { color: #93c5fd; background: #1e293b; }
+
+.vote-add-player-btn {
+  align-self: flex-start;
+  padding: 6px 14px;
+  background: #1e293b;
+  color: #94a3b8;
+  border: 1px solid #334155;
+  border-radius: 5px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: opacity 0.1s;
+}
+
+.vote-add-player-btn:hover { opacity: 0.8; }
+
 .board-viewport {
   width: 100%;
   height: 100%;

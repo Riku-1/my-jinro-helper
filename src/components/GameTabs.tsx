@@ -1,15 +1,22 @@
 import type { Game } from '../App';
 
+type ViewMode = 'board' | 'vote';
+
 type Props = {
   games: Game[];
   activeGameId: string;
+  viewMode: ViewMode;
   onSwitch: (id: string) => void;
   onCreate: () => void;
   onRename: (id: string, name: string) => void;
   onDelete: (id: string) => void;
+  onSetView: (mode: ViewMode) => void;
 };
 
-export default function GameTabs({ games, activeGameId, onSwitch, onCreate, onRename, onDelete }: Props) {
+export default function GameTabs({
+  games, activeGameId, viewMode,
+  onSwitch, onCreate, onRename, onDelete, onSetView,
+}: Props) {
   const handleRename = () => {
     const current = games.find((g) => g.id === activeGameId);
     if (!current) return;
@@ -39,6 +46,16 @@ export default function GameTabs({ games, activeGameId, onSwitch, onCreate, onRe
       {games.length > 1 && (
         <button className="game-btn game-btn--danger" onClick={handleDelete} title="このゲームを削除">削除</button>
       )}
+      <div className="view-toggle">
+        <button
+          className={`view-toggle-btn${viewMode === 'board' ? ' view-toggle-btn--active' : ''}`}
+          onClick={() => onSetView('board')}
+        >盤面</button>
+        <button
+          className={`view-toggle-btn${viewMode === 'vote' ? ' view-toggle-btn--active' : ''}`}
+          onClick={() => onSetView('vote')}
+        >投票履歴</button>
+      </div>
     </div>
   );
 }

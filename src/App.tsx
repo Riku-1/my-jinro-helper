@@ -3,6 +3,7 @@ import IconPalette from './components/IconPalette';
 import GameBoard from './components/GameBoard';
 import CommentSidebar from './components/CommentSidebar';
 import GameTabs from './components/GameTabs';
+import VoteTable from './components/VoteTable';
 import type { IconDef } from './constants/icons';
 import './App.css';
 
@@ -25,12 +26,19 @@ export type PlacedComment = {
   y: number;
 };
 
+export type Player = {
+  number: number;
+  name: string;
+};
+
 export type Game = {
   id: string;
   name: string;
   boardImage: string | null;
   placedIcons: PlacedIcon[];
   placedComments: PlacedComment[];
+  players: Player[];
+  voteTable: string[][];  // voteTable[dayIndex][playerIndex]
 };
 
 type AppState = {
@@ -44,8 +52,14 @@ type HistoryEntry = {
   placedComments: PlacedComment[];
 };
 
+type ViewMode = 'board' | 'vote';
+
 function newGame(name: string): Game {
-  return { id: crypto.randomUUID(), name, boardImage: null, placedIcons: [], placedComments: [] };
+  return {
+    id: crypto.randomUUID(), name,
+    boardImage: null, placedIcons: [], placedComments: [],
+    players: [], voteTable: [],
+  };
 }
 
 function resolveInstanceColor(iconDef: IconDef, prev: PlacedIcon[]): string {
@@ -59,8 +73,14 @@ function resolveInstanceColor(iconDef: IconDef, prev: PlacedIcon[]): string {
 function loadState(): AppState {
   try {
     const raw2 = localStorage.getItem(STORAGE_KEY_V2);
-    if (raw2) return JSON.parse(raw2) as AppState;
-
+    if (raw2) {
+      const parsed = JSON.parse(raw2) as AppState;
+      // Ensure new fields exist on old saves
+      parsed.games = parsed.games.map((g) => ({
+        players: [], voteTable: [], ...g,
+      }));
+      return parsed;
+    }
     const raw1 = localStorage.getItem(STORAGE_KEY_V1);
     const g = newGame('ゲーム 1');
     if (raw1) {
@@ -82,6 +102,7 @@ export default function App() {
   const [activeGameId, setActiveGameId] = useState<string>(initial.activeGameId);
   const [undoStack, setUndoStack]       = useState<HistoryEntry[]>([]);
   const [redoStack, setRedoStack]       = useState<HistoryEntry[]>([]);
+  const [viewMode, setViewMode]         = useState<ViewMode>('board');
 
   const activeGameIdRef = useRef(activeGameId);
   useEffect(() => { activeGameIdRef.current = activeGameId; }, [activeGameId]);
@@ -111,7 +132,6 @@ export default function App() {
     return { gameId: current.id, placedIcons: current.placedIcons, placedComments: current.placedComments };
   }, []);
 
-  // Push current state to undo stack and clear redo stack
   const pushHistory = useCallback(() => {
     const snap = snapshotActive();
     if (!snap) return;
@@ -119,49 +139,30 @@ export default function App() {
     setRedoStack([]);
   }, [snapshotActive]);
 
-  // Undo: restore last undo entry, push current state to redo stack
   const undo = useCallback(() => {
     const stack = undoStackRef.current;
     if (stack.length === 0) return;
     const target = stack[stack.length - 1];
-
     const snap = gamesRef.current.find((g) => g.id === target.gameId);
     if (snap) {
-      setRedoStack((r) => [
-        ...r.slice(-(MAX_HISTORY - 1)),
-        { gameId: snap.id, placedIcons: snap.placedIcons, placedComments: snap.placedComments },
-      ]);
+      setRedoStack((r) => [...r.slice(-(MAX_HISTORY - 1)), { gameId: snap.id, placedIcons: snap.placedIcons, placedComments: snap.placedComments }]);
     }
-    setGames((prev) => prev.map((g) =>
-      g.id === target.gameId
-        ? { ...g, placedIcons: target.placedIcons, placedComments: target.placedComments }
-        : g,
-    ));
+    setGames((prev) => prev.map((g) => g.id === target.gameId ? { ...g, placedIcons: target.placedIcons, placedComments: target.placedComments } : g));
     setUndoStack((h) => h.slice(0, -1));
   }, []);
 
-  // Redo: restore last redo entry, push current state to undo stack
   const redo = useCallback(() => {
     const stack = redoStackRef.current;
     if (stack.length === 0) return;
     const target = stack[stack.length - 1];
-
     const snap = gamesRef.current.find((g) => g.id === target.gameId);
     if (snap) {
-      setUndoStack((h) => [
-        ...h.slice(-(MAX_HISTORY - 1)),
-        { gameId: snap.id, placedIcons: snap.placedIcons, placedComments: snap.placedComments },
-      ]);
+      setUndoStack((h) => [...h.slice(-(MAX_HISTORY - 1)), { gameId: snap.id, placedIcons: snap.placedIcons, placedComments: snap.placedComments }]);
     }
-    setGames((prev) => prev.map((g) =>
-      g.id === target.gameId
-        ? { ...g, placedIcons: target.placedIcons, placedComments: target.placedComments }
-        : g,
-    ));
+    setGames((prev) => prev.map((g) => g.id === target.gameId ? { ...g, placedIcons: target.placedIcons, placedComments: target.placedComments } : g));
     setRedoStack((r) => r.slice(0, -1));
   }, []);
 
-  // Keyboard shortcuts
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       const mod = e.ctrlKey || e.metaKey;
@@ -196,45 +197,50 @@ export default function App() {
   // Icon handlers
   const handleDropIcon = (iconDef: IconDef, x: number, y: number, resolvedColor?: string) => {
     pushHistory();
-    updateActive((g) => ({
-      ...g,
-      placedIcons: [
-        ...g.placedIcons,
-        { id: crypto.randomUUID(), iconDef, instanceColor: resolvedColor ?? resolveInstanceColor(iconDef, g.placedIcons), x, y },
-      ],
-    }));
+    updateActive((g) => ({ ...g, placedIcons: [...g.placedIcons, { id: crypto.randomUUID(), iconDef, instanceColor: resolvedColor ?? resolveInstanceColor(iconDef, g.placedIcons), x, y }] }));
   };
-
-  const handleMoveIcon = (id: string, x: number, y: number) => {
-    pushHistory();
-    updateActive((g) => ({ ...g, placedIcons: g.placedIcons.map((icon) => (icon.id === id ? { ...icon, x, y } : icon)) }));
-  };
-
-  const handleRemoveIcon = (id: string) => {
-    pushHistory();
-    updateActive((g) => ({ ...g, placedIcons: g.placedIcons.filter((icon) => icon.id !== id) }));
-  };
+  const handleMoveIcon = (id: string, x: number, y: number) => { pushHistory(); updateActive((g) => ({ ...g, placedIcons: g.placedIcons.map((icon) => (icon.id === id ? { ...icon, x, y } : icon)) })); };
+  const handleRemoveIcon = (id: string) => { pushHistory(); updateActive((g) => ({ ...g, placedIcons: g.placedIcons.filter((icon) => icon.id !== id) })); };
 
   // Comment handlers
-  const handleDropComment = (text: string, x: number, y: number) => {
-    pushHistory();
-    updateActive((g) => ({ ...g, placedComments: [...g.placedComments, { id: crypto.randomUUID(), text, x, y }] }));
-  };
+  const handleDropComment = (text: string, x: number, y: number) => { pushHistory(); updateActive((g) => ({ ...g, placedComments: [...g.placedComments, { id: crypto.randomUUID(), text, x, y }] })); };
+  const handleMoveComment = (id: string, x: number, y: number) => { pushHistory(); updateActive((g) => ({ ...g, placedComments: g.placedComments.map((c) => (c.id === id ? { ...c, x, y } : c)) })); };
+  const handleRemoveComment = (id: string) => { pushHistory(); updateActive((g) => ({ ...g, placedComments: g.placedComments.filter((c) => c.id !== id) })); };
+  const handleClearAll = () => { pushHistory(); updateActive((g) => ({ ...g, placedIcons: [], placedComments: [] })); };
 
-  const handleMoveComment = (id: string, x: number, y: number) => {
-    pushHistory();
-    updateActive((g) => ({ ...g, placedComments: g.placedComments.map((c) => (c.id === id ? { ...c, x, y } : c)) }));
-  };
+  // Vote handlers
+  const handleUpdateVote = (day: number, pi: number, value: string) =>
+    updateActive((g) => {
+      const table = g.voteTable.map((r) => [...r]);
+      if (table[day]) table[day][pi] = value;
+      return { ...g, voteTable: table };
+    });
 
-  const handleRemoveComment = (id: string) => {
-    pushHistory();
-    updateActive((g) => ({ ...g, placedComments: g.placedComments.filter((c) => c.id !== id) }));
-  };
+  const handleAddDay = () =>
+    updateActive((g) => ({ ...g, voteTable: [...g.voteTable, Array(g.players.length).fill('')] }));
 
-  const handleClearAll = () => {
-    pushHistory();
-    updateActive((g) => ({ ...g, placedIcons: [], placedComments: [] }));
-  };
+  const handleRemoveDay = (day: number) =>
+    updateActive((g) => ({ ...g, voteTable: g.voteTable.filter((_, i) => i !== day) }));
+
+  const handleAddPlayer = () =>
+    updateActive((g) => {
+      const nextNum = g.players.length > 0 ? Math.max(...g.players.map((p) => p.number)) + 1 : 1;
+      return {
+        ...g,
+        players: [...g.players, { number: nextNum, name: '' }],
+        voteTable: g.voteTable.map((day) => [...day, '']),
+      };
+    });
+
+  const handleRemovePlayer = (pi: number) =>
+    updateActive((g) => ({
+      ...g,
+      players: g.players.filter((_, i) => i !== pi),
+      voteTable: g.voteTable.map((day) => day.filter((_, i) => i !== pi)),
+    }));
+
+  const handleUpdatePlayer = (pi: number, player: Player) =>
+    updateActive((g) => ({ ...g, players: g.players.map((p, i) => (i === pi ? player : p)) }));
 
   // Game management
   const handleCreateGame = () => {
@@ -242,10 +248,7 @@ export default function App() {
     setGames((prev) => [...prev, g]);
     setActiveGameId(g.id);
   };
-
-  const handleRenameGame = (id: string, name: string) =>
-    setGames((prev) => prev.map((g) => g.id === id ? { ...g, name } : g));
-
+  const handleRenameGame = (id: string, name: string) => setGames((prev) => prev.map((g) => g.id === id ? { ...g, name } : g));
   const handleDeleteGame = (id: string) => {
     setGames((prev) => {
       const remaining = prev.filter((g) => g.id !== id);
@@ -267,27 +270,18 @@ export default function App() {
             <input type="file" accept="image/*" onChange={handleImageUpload} hidden />
           </label>
           {hasAnyPlacement && (
-            <button className="btn btn-secondary" onClick={handleClearAll}>
-              配置をクリア
-            </button>
+            <button className="btn btn-secondary" onClick={handleClearAll}>配置をクリア</button>
           )}
           {activeGame.boardImage && (
-            <button
-              className="btn btn-danger"
-              onClick={() => updateActive((g) => ({ ...g, boardImage: null, placedIcons: [], placedComments: [] }))}
-            >
+            <button className="btn btn-danger" onClick={() => updateActive((g) => ({ ...g, boardImage: null, placedIcons: [], placedComments: [] }))}>
               全リセット
             </button>
           )}
           {undoStack.length > 0 && (
-            <button className="btn btn-secondary" onClick={undo}>
-              元に戻す (Ctrl+Z)
-            </button>
+            <button className="btn btn-secondary" onClick={undo}>元に戻す (Ctrl+Z)</button>
           )}
           {redoStack.length > 0 && (
-            <button className="btn btn-secondary" onClick={redo}>
-              やり直す (Ctrl+Y)
-            </button>
+            <button className="btn btn-secondary" onClick={redo}>やり直す (Ctrl+Y)</button>
           )}
         </div>
       </aside>
@@ -296,22 +290,37 @@ export default function App() {
         <GameTabs
           games={games}
           activeGameId={activeGameId}
+          viewMode={viewMode}
           onSwitch={setActiveGameId}
           onCreate={handleCreateGame}
           onRename={handleRenameGame}
           onDelete={handleDeleteGame}
+          onSetView={setViewMode}
         />
-        <GameBoard
-          image={activeGame.boardImage}
-          placedIcons={activeGame.placedIcons}
-          placedComments={activeGame.placedComments}
-          onDropIcon={handleDropIcon}
-          onMoveIcon={handleMoveIcon}
-          onRemoveIcon={handleRemoveIcon}
-          onDropComment={handleDropComment}
-          onMoveComment={handleMoveComment}
-          onRemoveComment={handleRemoveComment}
-        />
+        {viewMode === 'board' ? (
+          <GameBoard
+            image={activeGame.boardImage}
+            placedIcons={activeGame.placedIcons}
+            placedComments={activeGame.placedComments}
+            onDropIcon={handleDropIcon}
+            onMoveIcon={handleMoveIcon}
+            onRemoveIcon={handleRemoveIcon}
+            onDropComment={handleDropComment}
+            onMoveComment={handleMoveComment}
+            onRemoveComment={handleRemoveComment}
+          />
+        ) : (
+          <VoteTable
+            players={activeGame.players}
+            voteTable={activeGame.voteTable}
+            onUpdateVote={handleUpdateVote}
+            onAddDay={handleAddDay}
+            onAddPlayer={handleAddPlayer}
+            onRemoveDay={handleRemoveDay}
+            onRemovePlayer={handleRemovePlayer}
+            onUpdatePlayer={handleUpdatePlayer}
+          />
+        )}
       </div>
 
       <CommentSidebar />
