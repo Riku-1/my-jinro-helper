@@ -497,7 +497,6 @@
   /* flex set via inline style */
   min-height: 0;
   overflow: hidden;
-  position: relative;
 }
 
 .board-divider {
@@ -550,9 +549,8 @@
   position: relative;
   line-height: 0;
   user-select: none;
-  max-width: 100%;
-  max-height: 100%;
-  /* aspect-ratio set via inline style after image loads */
+  flex-shrink: 0;
+  /* width / height set via inline style by ResizeObserver */
 }
 
 .board-image {
