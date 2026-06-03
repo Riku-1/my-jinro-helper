@@ -243,6 +243,24 @@ export default function App() {
   const handleUpdatePlayer = (pi: number, player: Player) =>
     updateActive((g) => ({ ...g, players: g.players.map((p, i) => (i === pi ? player : p)) }));
 
+  const handleImportPlayers = (newPlayers: Player[]) => {
+    const hasData =
+      activeGame.players.some((p) => p.name.trim() !== '') ||
+      activeGame.voteTable.some((day) => day.some((v) => v.trim() !== ''));
+    if (hasData) {
+      if (!window.confirm('既存のプレイヤー情報や投票結果が上書きされます。続けますか？')) return;
+    }
+    updateActive((g) => {
+      const diff = newPlayers.length - g.players.length;
+      const voteTable = g.voteTable.map((day) => {
+        if (diff > 0) return [...day, ...Array(diff).fill('')];
+        if (diff < 0) return day.slice(0, newPlayers.length);
+        return [...day];
+      });
+      return { ...g, players: newPlayers, voteTable };
+    });
+  };
+
   const handleSetPlayerCount = (count: number) => {
     const current = activeGame.players.length;
     if (count === current) return;
@@ -368,6 +386,7 @@ export default function App() {
             onRemovePlayer={handleRemovePlayer}
             onUpdatePlayer={handleUpdatePlayer}
             onSetPlayerCount={handleSetPlayerCount}
+            onImportPlayers={handleImportPlayers}
           />
         )}
       </div>

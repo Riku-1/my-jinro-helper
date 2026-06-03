@@ -11,11 +11,30 @@ type Props = {
   onRemovePlayer: (pi: number) => void;
   onUpdatePlayer: (pi: number, player: Player) => void;
   onSetPlayerCount: (count: number) => void;
+  onImportPlayers: (players: Player[]) => void;
 };
 
-export default function PlayerManager({ players, onAddPlayer, onRemovePlayer, onUpdatePlayer, onSetPlayerCount }: Props) {
-  const [editing, setEditing] = useState<EditingCell | null>(null);
+function parsePlayerText(text: string): Player[] {
+  return text
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line, i) => {
+      // Match "01.name", "1. name", "1:name", "1 name" etc.
+      const m = line.match(/^(\d+)[.\s:]+(.*)$/);
+      if (m) return { number: parseInt(m[1], 10), name: m[2].trim() };
+      // No number prefix → use line index
+      return { number: i + 1, name: line };
+    });
+}
+
+export default function PlayerManager({
+  players, onAddPlayer, onRemovePlayer, onUpdatePlayer,
+  onSetPlayerCount, onImportPlayers,
+}: Props) {
+  const [editing, setEditing]       = useState<EditingCell | null>(null);
   const [inputValue, setInputValue] = useState('');
+  const [importText, setImportText] = useState('');
 
   const startEdit = (cell: EditingCell, initial: string) => {
     setEditing(cell);
@@ -36,6 +55,13 @@ export default function PlayerManager({ players, onAddPlayer, onRemovePlayer, on
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') commitEdit();
     if (e.key === 'Escape') setEditing(null);
+  };
+
+  const handleImport = () => {
+    const parsed = parsePlayerText(importText);
+    if (parsed.length === 0) return;
+    onImportPlayers(parsed);
+    setImportText('');
   };
 
   return (
@@ -122,6 +148,27 @@ export default function PlayerManager({ players, onAddPlayer, onRemovePlayer, on
       <button className="vote-add-player-btn" onClick={onAddPlayer}>
         ＋ プレイヤーを1人追加
       </button>
+
+      <div className="import-panel">
+        <p className="import-hint">
+          1行1プレイヤー。形式: <code>01.プレイヤー名</code> または <code>名前のみ</code>
+        </p>
+        <textarea
+          className="import-textarea"
+          value={importText}
+          onChange={(e) => setImportText(e.target.value)}
+          placeholder={'01.Alice\n02.Bob\n03.Carol'}
+          rows={5}
+        />
+        <div className="import-actions">
+          <button className="import-btn" onClick={handleImport} disabled={!importText.trim()}>
+            インポート
+          </button>
+          <button className="import-cancel-btn" onClick={() => setImportText('')} disabled={!importText.trim()}>
+            クリア
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

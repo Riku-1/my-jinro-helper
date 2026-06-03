@@ -397,6 +397,79 @@
 
 .player-count-select:focus { border-color: #3b82f6; }
 
+.import-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  background: #1e293b;
+  border-radius: 6px;
+  border: 1px solid #334155;
+}
+
+.import-hint {
+  font-size: 0.75rem;
+  color: #64748b;
+  margin: 0;
+}
+
+.import-hint code {
+  background: #0f172a;
+  padding: 1px 4px;
+  border-radius: 3px;
+  color: #93c5fd;
+  font-size: 0.78rem;
+}
+
+.import-textarea {
+  width: 100%;
+  background: #0f172a;
+  color: #f1f5f9;
+  border: 1px solid #334155;
+  border-radius: 4px;
+  padding: 8px;
+  font-size: 0.82rem;
+  font-family: monospace;
+  resize: vertical;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.import-textarea:focus { border-color: #3b82f6; }
+
+.import-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.import-btn {
+  padding: 5px 14px;
+  background: #3b82f6;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.1s;
+}
+
+.import-btn:hover { opacity: 0.85; }
+.import-btn:disabled { opacity: 0.4; cursor: default; }
+
+.import-cancel-btn {
+  padding: 5px 14px;
+  background: #334155;
+  color: #94a3b8;
+  border: none;
+  border-radius: 5px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: opacity 0.1s;
+}
+
+.import-cancel-btn:hover { opacity: 0.8; }
+
 .vote-add-player-btn {
   align-self: flex-start;
   padding: 6px 14px;
