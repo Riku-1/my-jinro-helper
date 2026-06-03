@@ -243,14 +243,29 @@ export default function App() {
   const handleUpdatePlayer = (pi: number, player: Player) =>
     updateActive((g) => ({ ...g, players: g.players.map((p, i) => (i === pi ? player : p)) }));
 
-  const handleSetPlayerCount = (count: number) =>
+  const handleSetPlayerCount = (count: number) => {
+    const current = activeGame.players.length;
+    if (count === current) return;
+
+    if (count < current) {
+      const removedPlayers = activeGame.players.slice(count);
+      const hasName  = removedPlayers.some((p) => p.name.trim() !== '');
+      const hasVotes = activeGame.voteTable.some((day) =>
+        day.slice(count).some((v) => v.trim() !== ''),
+      );
+      if (hasName || hasVotes) {
+        const ok = window.confirm(
+          `${current - count}人分のプレイヤー名や投票結果が削除されます。続けますか？`,
+        );
+        if (!ok) return;
+      }
+    }
+
     updateActive((g) => {
-      const current = g.players.length;
-      if (count === current) return g;
-      if (count > current) {
+      if (count > g.players.length) {
         const players = [...g.players];
         const voteTable = g.voteTable.map((day) => [...day]);
-        for (let i = current; i < count; i++) {
+        for (let i = g.players.length; i < count; i++) {
           const num = players.length > 0 ? Math.max(...players.map((p) => p.number)) + 1 : i + 1;
           players.push({ number: num, name: '' });
           voteTable.forEach((day) => day.push(''));
@@ -264,6 +279,7 @@ export default function App() {
         };
       }
     });
+  };
 
   // Game management
   const handleCreateGame = () => {
