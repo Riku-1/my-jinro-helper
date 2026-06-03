@@ -243,6 +243,28 @@ export default function App() {
   const handleUpdatePlayer = (pi: number, player: Player) =>
     updateActive((g) => ({ ...g, players: g.players.map((p, i) => (i === pi ? player : p)) }));
 
+  const handleSetPlayerCount = (count: number) =>
+    updateActive((g) => {
+      const current = g.players.length;
+      if (count === current) return g;
+      if (count > current) {
+        const players = [...g.players];
+        const voteTable = g.voteTable.map((day) => [...day]);
+        for (let i = current; i < count; i++) {
+          const num = players.length > 0 ? Math.max(...players.map((p) => p.number)) + 1 : i + 1;
+          players.push({ number: num, name: '' });
+          voteTable.forEach((day) => day.push(''));
+        }
+        return { ...g, players, voteTable };
+      } else {
+        return {
+          ...g,
+          players: g.players.slice(0, count),
+          voteTable: g.voteTable.map((day) => day.slice(0, count)),
+        };
+      }
+    });
+
   // Game management
   const handleCreateGame = () => {
     const g = newGame(`ゲーム ${games.length + 1}`);
@@ -329,6 +351,7 @@ export default function App() {
             onAddPlayer={handleAddPlayer}
             onRemovePlayer={handleRemovePlayer}
             onUpdatePlayer={handleUpdatePlayer}
+            onSetPlayerCount={handleSetPlayerCount}
           />
         )}
       </div>

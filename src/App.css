@@ -359,12 +359,43 @@
   gap: 16px;
 }
 
+.player-manager-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
 .player-manager-title {
   font-size: 0.9rem;
   font-weight: 600;
   color: #94a3b8;
   margin: 0;
 }
+
+.player-count-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.player-count-label {
+  font-size: 0.82rem;
+  color: #64748b;
+}
+
+.player-count-select {
+  padding: 4px 8px;
+  background: #1e293b;
+  color: #f1f5f9;
+  border: 1px solid #334155;
+  border-radius: 5px;
+  font-size: 0.82rem;
+  outline: none;
+  cursor: pointer;
+}
+
+.player-count-select:focus { border-color: #3b82f6; }
 
 .vote-add-player-btn {
   align-self: flex-start;

@@ -10,9 +10,10 @@ type Props = {
   onAddPlayer: () => void;
   onRemovePlayer: (pi: number) => void;
   onUpdatePlayer: (pi: number, player: Player) => void;
+  onSetPlayerCount: (count: number) => void;
 };
 
-export default function PlayerManager({ players, onAddPlayer, onRemovePlayer, onUpdatePlayer }: Props) {
+export default function PlayerManager({ players, onAddPlayer, onRemovePlayer, onUpdatePlayer, onSetPlayerCount }: Props) {
   const [editing, setEditing] = useState<EditingCell | null>(null);
   const [inputValue, setInputValue] = useState('');
 
@@ -39,16 +40,29 @@ export default function PlayerManager({ players, onAddPlayer, onRemovePlayer, on
 
   return (
     <div className="player-manager">
-      <h2 className="player-manager-title">プレイヤー設定</h2>
-      {players.length === 0 && (
-        <p className="vote-empty">プレイヤーを追加してください</p>
-      )}
+      <div className="player-manager-header">
+        <h2 className="player-manager-title">プレイヤー設定</h2>
+        <div className="player-count-row">
+          <label className="player-count-label">人数</label>
+          <select
+            className="player-count-select"
+            value={players.length <= 16 ? players.length : ''}
+            onChange={(e) => onSetPlayerCount(Number(e.target.value))}
+          >
+            <option value={0}>0人</option>
+            {Array.from({ length: 16 }, (_, i) => (
+              <option key={i + 1} value={i + 1}>{i + 1}人</option>
+            ))}
+          </select>
+        </div>
+      </div>
+
       {players.length > 0 && (
         <table className="vote-table">
           <thead>
             <tr>
               <th className="vote-th" style={{ width: 60 }}>番号</th>
-              <th className="vote-th" style={{ minWidth: 120 }}>名前</th>
+              <th className="vote-th" style={{ minWidth: 140 }}>名前</th>
               <th className="vote-th" style={{ width: 40 }} />
             </tr>
           </thead>
@@ -97,19 +111,16 @@ export default function PlayerManager({ players, onAddPlayer, onRemovePlayer, on
                   )}
                 </td>
                 <td className="vote-td" style={{ textAlign: 'center' }}>
-                  <button
-                    className="vote-del-btn"
-                    onClick={() => onRemovePlayer(pi)}
-                    title="削除"
-                  >×</button>
+                  <button className="vote-del-btn" onClick={() => onRemovePlayer(pi)} title="削除">×</button>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
       )}
+
       <button className="vote-add-player-btn" onClick={onAddPlayer}>
-        ＋ プレイヤー追加
+        ＋ プレイヤーを1人追加
       </button>
     </div>
   );
