@@ -136,16 +136,11 @@ export default function VoteTable({
           </thead>
           <tbody>
             {playerEntries.map(({ player, pi }) => {
-              const cnt = singleDayRanks ? (singleDayRanks.counts[String(player.number)] ?? 0) : 0;
-              const nameColor =
-                singleDayRanks && singleDayRanks.first > 0 && cnt === singleDayRanks.first ? 'red'
-                : singleDayRanks && singleDayRanks.second > 0 && cnt === singleDayRanks.second ? 'dodgerblue'
-                : undefined;
               return (
                 <tr key={pi} className="vote-row">
                   <td className="vote-td vote-td--player">
-                    <span className="vote-player-num" style={nameColor ? { color: nameColor } : undefined}>{player.number}</span>
-                    <span className="vote-player-name-ro" style={nameColor ? { color: nameColor } : undefined}>{player.name || <span className="vote-placeholder">—</span>}</span>
+                    <span className="vote-player-num">{player.number}</span>
+                    <span className="vote-player-name-ro">{player.name || <span className="vote-placeholder">—</span>}</span>
                   </td>
                   {selectedDayEntries.map(({ i: entryIdx }) => (
                     <td key={entryIdx} className="vote-td vote-td--cell">
