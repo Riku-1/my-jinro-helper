@@ -26,7 +26,7 @@ export default function VoteTable({
   const [contentMode, setContentMode] = useState<ContentMode>('memo');
   const [selectedVoteDay, setSelectedVoteDay] = useState<SelectedDay>('all');
   const [selectedMemoDay, setSelectedMemoDay] = useState<SelectedDay>('all');
-  const [sortByVotes, setSortByVotes] = useState(false);
+  const [sortRoundIndex, setSortRoundIndex] = useState<number | null>(null);
 
   const uniqueDays = [...new Set(voteDayInfo.map((d) => d.day))];
 
@@ -81,9 +81,7 @@ export default function VoteTable({
     return { counts, first: sorted[0] ?? 0, second: sorted[1] ?? 0 };
   };
 
-  const singleDayRanks = selectedDayEntries.length > 0
-    ? computeVoteRanks(selectedDayEntries.map(({ i }) => i))
-    : null;
+  const roundRanks = selectedDayEntries.map(({ i }) => computeVoteRanks([i]));
 
   if (players.length === 0) {
     return (
@@ -96,40 +94,39 @@ export default function VoteTable({
   const renderSingleDayView = () => {
     const playerEntries = players.map((player, pi) => ({ player, pi }));
     const totalRounds = selectedDayEntries.length;
-    if (sortByVotes && singleDayRanks) {
-      playerEntries.sort((a, b) => {
-        const maxCntA = Math.max(
-          ...selectedDayEntries.map(({ i }) => {
-            const voted = voteTable[i]?.[a.pi] ?? '';
-            return voted ? (singleDayRanks.counts[voted] ?? 0) : -1;
-          }),
-          -1,
-        );
-        const maxCntB = Math.max(
-          ...selectedDayEntries.map(({ i }) => {
-            const voted = voteTable[i]?.[b.pi] ?? '';
-            return voted ? (singleDayRanks.counts[voted] ?? 0) : -1;
-          }),
-          -1,
-        );
-        return maxCntB - maxCntA;
-      });
+    if (sortRoundIndex !== null) {
+      const ranks = roundRanks[sortRoundIndex];
+      const entryIdx = selectedDayEntries[sortRoundIndex]?.i;
+      if (ranks && entryIdx !== undefined) {
+        playerEntries.sort((a, b) => {
+          const votedA = voteTable[entryIdx]?.[a.pi] ?? '';
+          const votedB = voteTable[entryIdx]?.[b.pi] ?? '';
+          const cntA = votedA ? (ranks.counts[votedA] ?? 0) : -1;
+          const cntB = votedB ? (ranks.counts[votedB] ?? 0) : -1;
+          return cntB - cntA;
+        });
+      }
     }
     return (
       <>
-        <div className="vote-sort-bar">
-          <button
-            className={`vote-sort-btn${sortByVotes ? ' vote-sort-btn--active' : ''}`}
-            onClick={() => setSortByVotes((v) => !v)}
-          >得票数順{sortByVotes ? ' ON' : ' OFF'}</button>
-        </div>
         <table className="vote-table">
           <thead>
             <tr>
-              <th className="vote-th vote-th--player">プレイヤー</th>
-              {selectedDayEntries.map(({ info }) => (
-                <th key={info.round} className="vote-th vote-th--day">
+              <th
+                className={`vote-th vote-th--player vote-th--sortable${sortRoundIndex === null ? ' vote-th--sorted' : ''}`}
+                onClick={() => { setSortRoundIndex(null); }}
+              >
+                プレイヤー
+                <span className="vote-th-sort-icon">{sortRoundIndex === null ? '⇅' : '↺'}</span>
+              </th>
+              {selectedDayEntries.map(({ info }, ri) => (
+                <th
+                  key={info.round}
+                  className={`vote-th vote-th--day vote-th--sortable${sortRoundIndex === ri ? ' vote-th--sorted' : ''}`}
+                  onClick={() => setSortRoundIndex(ri)}
+                >
                   {totalRounds === 1 ? '投票先' : `${info.round}回目`}
+                  <span className="vote-th-sort-icon">{sortRoundIndex === ri ? '▼' : '⇅'}</span>
                 </th>
               ))}
             </tr>
@@ -142,9 +139,9 @@ export default function VoteTable({
                     <span className="vote-player-num">{player.number}</span>
                     <span className="vote-player-name-ro">{player.name || <span className="vote-placeholder">—</span>}</span>
                   </td>
-                  {selectedDayEntries.map(({ i: entryIdx }) => (
+                  {selectedDayEntries.map(({ i: entryIdx }, ri) => (
                     <td key={entryIdx} className="vote-td vote-td--cell">
-                      {renderVoteSelect(entryIdx, pi, singleDayRanks ?? undefined)}
+                      {renderVoteSelect(entryIdx, pi, roundRanks[ri])}
                     </td>
                   ))}
                 </tr>
@@ -179,13 +176,13 @@ export default function VoteTable({
       <div className="vote-day-tabs">
         <button
           className={`vote-day-tab${contentMode === 'vote' && selectedVoteDay === 'all' ? ' vote-day-tab--active' : ''}`}
-          onClick={() => { setContentMode('vote'); setSelectedVoteDay('all'); }}
+          onClick={() => { setContentMode('vote'); setSelectedVoteDay('all'); setSortRoundIndex(null); }}
         >全体</button>
         {uniqueDays.map((dayNum, idx) => (
           <button
             key={dayNum}
             className={`vote-day-tab${contentMode === 'vote' && selectedVoteDay === dayNum ? ' vote-day-tab--active' : ''}`}
-            onClick={() => { setContentMode('vote'); setSelectedVoteDay(dayNum); }}
+            onClick={() => { setContentMode('vote'); setSelectedVoteDay(dayNum); setSortRoundIndex(null); }}
           >
             {dayNum}日目
             {idx === uniqueDays.length - 1 && (
