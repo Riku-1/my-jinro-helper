@@ -33,23 +33,40 @@ export default function VoteTable({
     else if (typeof selectedMemoDay === 'number' && selectedMemoDay > d) setSelectedMemoDay(selectedMemoDay - 1);
   };
 
-  const renderVoteSelect = (d: number, pi: number) => {
+  const renderVoteSelect = (d: number, pi: number, ranks?: { counts: Record<string, number>; first: number; second: number }) => {
     const val = voteTable[d]?.[pi] ?? '';
+    const selectedCnt = ranks && val ? (ranks.counts[val] ?? 0) : 0;
+    const selectColor = ranks && ranks.first > 0 && selectedCnt === ranks.first ? 'red'
+      : ranks && ranks.second > 0 && selectedCnt === ranks.second ? 'dodgerblue'
+      : undefined;
     return (
       <select
         className="vote-select"
         value={val}
+        style={selectColor ? { color: selectColor } : undefined}
         onChange={(e) => onUpdateVote(d, pi, e.target.value)}
       >
-        <option value="">-</option>
+        <option value="" style={{ color: 'white' }}>-</option>
         {players.map((p) => (
-          <option key={p.number} value={String(p.number)}>
+          <option key={p.number} value={String(p.number)} style={{ color: 'white' }}>
             {p.number}{p.name ? ` ${p.name}` : ''}
           </option>
         ))}
       </select>
     );
   };
+
+  const computeVoteRanks = (d: number) => {
+    const counts: Record<string, number> = {};
+    players.forEach((_, pi) => {
+      const voted = voteTable[d]?.[pi];
+      if (voted) counts[voted] = (counts[voted] ?? 0) + 1;
+    });
+    const sorted = [...new Set(Object.values(counts))].sort((a, b) => b - a);
+    return { counts, first: sorted[0] ?? 0, second: sorted[1] ?? 0 };
+  };
+
+  const singleDayRanks = typeof selectedVoteDay === 'number' ? computeVoteRanks(selectedVoteDay) : null;
 
   if (players.length === 0) {
     return (
@@ -139,15 +156,21 @@ export default function VoteTable({
               </tr>
             </thead>
             <tbody>
-              {players.map((player, pi) => (
-                <tr key={pi} className="vote-row">
-                  <td className="vote-td vote-td--player">
-                    <span className="vote-player-num">{player.number}</span>
-                    <span className="vote-player-name-ro">{player.name || <span className="vote-placeholder">—</span>}</span>
-                  </td>
-                  <td className="vote-td vote-td--cell">{renderVoteSelect(selectedVoteDay, pi)}</td>
-                </tr>
-              ))}
+              {players.map((player, pi) => {
+                const cnt = singleDayRanks ? (singleDayRanks.counts[String(player.number)] ?? 0) : 0;
+                const nameColor = singleDayRanks && singleDayRanks.first > 0 && cnt === singleDayRanks.first ? 'red'
+                  : singleDayRanks && singleDayRanks.second > 0 && cnt === singleDayRanks.second ? 'dodgerblue'
+                  : undefined;
+                return (
+                  <tr key={pi} className="vote-row">
+                    <td className="vote-td vote-td--player">
+                      <span className="vote-player-num" style={nameColor ? { color: nameColor } : undefined}>{player.number}</span>
+                      <span className="vote-player-name-ro" style={nameColor ? { color: nameColor } : undefined}>{player.name || <span className="vote-placeholder">—</span>}</span>
+                    </td>
+                    <td className="vote-td vote-td--cell">{renderVoteSelect(selectedVoteDay, pi, singleDayRanks ?? undefined)}</td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         )
