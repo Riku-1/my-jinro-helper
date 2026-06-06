@@ -416,6 +416,24 @@
 
 .vote-add-btn:hover { color: #93c5fd; border-color: #3b82f6; }
 
+.vote-sort-bar {
+  display: flex;
+  justify-content: flex-end;
+  padding: 4px 0 6px;
+}
+.vote-sort-btn {
+  padding: 4px 10px;
+  background: transparent;
+  color: #475569;
+  border: 1px solid #334155;
+  border-radius: 5px;
+  font-size: 0.78rem;
+  cursor: pointer;
+  transition: color 0.1s, border-color 0.1s, background 0.1s;
+}
+.vote-sort-btn:hover { color: #93c5fd; border-color: #3b82f6; }
+.vote-sort-btn--active { color: #93c5fd; border-color: #3b82f6; background: rgba(59,130,246,0.12); }
+
 .vote-player-name-ro {
   color: #e2e8f0;
   font-size: 0.85rem;

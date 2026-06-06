@@ -21,6 +21,7 @@ export default function VoteTable({
   const [contentMode, setContentMode]     = useState<ContentMode>('memo');
   const [selectedVoteDay, setSelectedVoteDay] = useState<SelectedDay>('all');
   const [selectedMemoDay, setSelectedMemoDay] = useState<SelectedDay>('all');
+  const [sortByVotes, setSortByVotes] = useState(false);
 
   const days = voteTable.length;
 
@@ -147,33 +148,53 @@ export default function VoteTable({
               ))}
             </tbody>
           </table>
-        ) : (
-          <table className="vote-table">
-            <thead>
-              <tr>
-                <th className="vote-th vote-th--player">プレイヤー</th>
-                <th className="vote-th vote-th--day">{selectedVoteDay + 1}日目 投票先</th>
-              </tr>
-            </thead>
-            <tbody>
-              {players.map((player, pi) => {
-                const cnt = singleDayRanks ? (singleDayRanks.counts[String(player.number)] ?? 0) : 0;
-                const nameColor = singleDayRanks && singleDayRanks.first > 0 && cnt === singleDayRanks.first ? 'red'
-                  : singleDayRanks && singleDayRanks.second > 0 && cnt === singleDayRanks.second ? 'dodgerblue'
-                  : undefined;
-                return (
-                  <tr key={pi} className="vote-row">
-                    <td className="vote-td vote-td--player">
-                      <span className="vote-player-num" style={nameColor ? { color: nameColor } : undefined}>{player.number}</span>
-                      <span className="vote-player-name-ro" style={nameColor ? { color: nameColor } : undefined}>{player.name || <span className="vote-placeholder">—</span>}</span>
-                    </td>
-                    <td className="vote-td vote-td--cell">{renderVoteSelect(selectedVoteDay, pi, singleDayRanks ?? undefined)}</td>
+        ) : (() => {
+          const playerEntries = players.map((player, pi) => ({ player, pi }));
+          if (sortByVotes && singleDayRanks) {
+            playerEntries.sort((a, b) => {
+              const votedA = voteTable[selectedVoteDay]?.[a.pi] ?? '';
+              const votedB = voteTable[selectedVoteDay]?.[b.pi] ?? '';
+              const ca = votedA ? (singleDayRanks.counts[votedA] ?? 0) : -1;
+              const cb = votedB ? (singleDayRanks.counts[votedB] ?? 0) : -1;
+              return cb - ca;
+            });
+          }
+          return (
+            <>
+              <div className="vote-sort-bar">
+                <button
+                  className={`vote-sort-btn${sortByVotes ? ' vote-sort-btn--active' : ''}`}
+                  onClick={() => setSortByVotes(v => !v)}
+                >得票数順{sortByVotes ? ' ON' : ' OFF'}</button>
+              </div>
+              <table className="vote-table">
+                <thead>
+                  <tr>
+                    <th className="vote-th vote-th--player">プレイヤー</th>
+                    <th className="vote-th vote-th--day">{selectedVoteDay + 1}日目 投票先</th>
                   </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        )
+                </thead>
+                <tbody>
+                  {playerEntries.map(({ player, pi }) => {
+                    const cnt = singleDayRanks ? (singleDayRanks.counts[String(player.number)] ?? 0) : 0;
+                    const nameColor = singleDayRanks && singleDayRanks.first > 0 && cnt === singleDayRanks.first ? 'red'
+                      : singleDayRanks && singleDayRanks.second > 0 && cnt === singleDayRanks.second ? 'dodgerblue'
+                      : undefined;
+                    return (
+                      <tr key={pi} className="vote-row">
+                        <td className="vote-td vote-td--player">
+                          <span className="vote-player-num" style={nameColor ? { color: nameColor } : undefined}>{player.number}</span>
+                          <span className="vote-player-name-ro" style={nameColor ? { color: nameColor } : undefined}>{player.name || <span className="vote-placeholder">—</span>}</span>
+                        </td>
+                        <td className="vote-td vote-td--cell">{renderVoteSelect(selectedVoteDay, pi, singleDayRanks ?? undefined)}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </>
+          );
+        })()
       ) : (
         /* メモビュー */
         selectedMemoDay === 'all' ? (
