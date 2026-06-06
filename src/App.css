@@ -247,7 +247,7 @@
   white-space: nowrap;
 }
 
-.vote-th--player { min-width: 140px; text-align: left; }
+.vote-th--player { min-width: 140px; text-align: left; position: relative; padding-right: 20px; }
 .vote-th--day    { min-width: 70px; text-align: center; }
 .vote-th--add    { background: transparent; border-color: transparent; }
 
@@ -262,6 +262,18 @@
   color: #e2e8f0;
   vertical-align: middle;
 }
+
+.vote-row:nth-child(even) .vote-td { background: #0f172a; }
+.vote-row:nth-child(even) .vote-td--player { background: #162032; }
+.vote-row:nth-child(even) .vote-select { background: #0f172a; }
+
+.vote-row--hl-target .vote-td,
+.vote-row--hl-target .vote-select { background: rgba(251, 191, 36, 0.18) !important; }
+.vote-row--hl-target .vote-td--player { background: rgba(251, 191, 36, 0.25) !important; }
+
+.vote-row--hl-voter .vote-td,
+.vote-row--hl-voter .vote-select { background: rgba(99, 179, 237, 0.15) !important; }
+.vote-row--hl-voter .vote-td--player { background: rgba(99, 179, 237, 0.2) !important; }
 
 .vote-td--player {
   display: flex;
@@ -416,23 +428,10 @@
 
 .vote-add-btn:hover { color: #93c5fd; border-color: #3b82f6; }
 
-.vote-sort-bar {
-  display: flex;
-  justify-content: flex-end;
-  padding: 4px 0 6px;
-}
-.vote-sort-btn {
-  padding: 4px 10px;
-  background: transparent;
-  color: #475569;
-  border: 1px solid #334155;
-  border-radius: 5px;
-  font-size: 0.78rem;
-  cursor: pointer;
-  transition: color 0.1s, border-color 0.1s, background 0.1s;
-}
-.vote-sort-btn:hover { color: #93c5fd; border-color: #3b82f6; }
-.vote-sort-btn--active { color: #93c5fd; border-color: #3b82f6; background: rgba(59,130,246,0.12); }
+.vote-th--sortable { cursor: pointer; user-select: none; }
+.vote-th--sortable:hover { color: #cbd5e1; }
+.vote-th--sorted { color: #93c5fd; background: #1a2d45; }
+.vote-th-sort-icon { position: absolute; right: 4px; top: 50%; transform: translateY(-50%); font-size: 0.7em; opacity: 0.7; }
 
 .vote-player-name-ro {
   color: #e2e8f0;

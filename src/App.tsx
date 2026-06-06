@@ -32,6 +32,11 @@ export type Player = {
   name: string;
 };
 
+export type VoteDayInfo = {
+  day: number;
+  round: number;
+};
+
 export type Game = {
   id: string;
   name: string;
@@ -39,8 +44,9 @@ export type Game = {
   placedIcons: PlacedIcon[];
   placedComments: PlacedComment[];
   players: Player[];
-  voteTable: string[][];  // voteTable[dayIndex][playerIndex]
-  dayMemos: string[];     // dayMemos[dayIndex]
+  voteTable: string[][];       // voteTable[entryIndex][playerIndex]
+  dayMemos: Record<number, string>; // dayMemos[logicalDay]
+  voteDayInfo: VoteDayInfo[];  // voteDayInfo[entryIndex]
 };
 
 type AppState = {
@@ -60,7 +66,10 @@ function newGame(name: string): Game {
   return {
     id: crypto.randomUUID(), name,
     boardImage: null, placedIcons: [], placedComments: [],
-    players: [], voteTable: Array.from({ length: 5 }, () => []), dayMemos: Array(5).fill(''),
+    players: [],
+    voteTable: Array.from({ length: 5 }, () => []),
+    dayMemos: { 1: '', 2: '', 3: '', 4: '', 5: '' },
+    voteDayInfo: Array.from({ length: 5 }, (_, i) => ({ day: i + 1, round: 1 })),
   };
 }
 
@@ -78,9 +87,30 @@ function loadState(): AppState {
     if (raw2) {
       const parsed = JSON.parse(raw2) as AppState;
       // Ensure new fields exist on old saves
-      parsed.games = parsed.games.map((g) => ({
-        players: [], voteTable: Array.from({ length: 5 }, () => []), dayMemos: Array(5).fill(''), ...g,
-      }));
+      parsed.games = parsed.games.map((g) => {
+        const voteDayInfo: VoteDayInfo[] = (g as any).voteDayInfo
+          ?? Array.from({ length: (g.voteTable ?? []).length || 5 }, (_, i) => ({ day: i + 1, round: 1 }));
+        // Migrate dayMemos: old string[] → Record<number, string>
+        const rawMemos = (g as any).dayMemos;
+        let dayMemos: Record<number, string>;
+        if (Array.isArray(rawMemos)) {
+          dayMemos = {};
+          rawMemos.forEach((memo: string, i: number) => {
+            const day = voteDayInfo[i]?.day ?? i + 1;
+            if (!(day in dayMemos)) dayMemos[day] = memo;
+          });
+        } else {
+          dayMemos = rawMemos ?? {};
+        }
+        const merged = {
+          players: [] as Player[],
+          voteTable: Array.from({ length: 5 }, () => [] as string[]),
+          ...g,
+          voteDayInfo,
+          dayMemos,
+        };
+        return merged;
+      });
       return parsed;
     }
     const raw1 = localStorage.getItem(STORAGE_KEY_V1);
@@ -221,25 +251,43 @@ export default function App() {
     });
 
   const handleAddDay = () =>
-    updateActive((g) => ({
-      ...g,
-      voteTable: [...g.voteTable, Array(g.players.length).fill('')],
-      dayMemos: [...g.dayMemos, ''],
-    }));
+    updateActive((g) => {
+      const maxDay = g.voteDayInfo.length > 0 ? Math.max(...g.voteDayInfo.map((d) => d.day)) : 0;
+      const newDay = maxDay + 1;
+      return {
+        ...g,
+        voteTable: [...g.voteTable, Array(g.players.length).fill('')],
+        dayMemos: { ...g.dayMemos, [newDay]: '' },
+        voteDayInfo: [...g.voteDayInfo, { day: newDay, round: 1 }],
+      };
+    });
 
-  const handleRemoveDay = (day: number) =>
-    updateActive((g) => ({
-      ...g,
-      voteTable: g.voteTable.filter((_, i) => i !== day),
-      dayMemos: g.dayMemos.filter((_, i) => i !== day),
-    }));
+  const handleAddRound = (dayNum: number) =>
+    updateActive((g) => {
+      const sameDay = g.voteDayInfo.map((info, i) => ({ info, i })).filter(({ info }) => info.day === dayNum);
+      const maxRound = Math.max(...sameDay.map(({ info }) => info.round));
+      const insertAt = sameDay[sameDay.length - 1].i + 1;
+      const newVoteDayInfo = [...g.voteDayInfo];
+      newVoteDayInfo.splice(insertAt, 0, { day: dayNum, round: maxRound + 1 });
+      const newVoteTable = [...g.voteTable];
+      newVoteTable.splice(insertAt, 0, Array(g.players.length).fill(''));
+      return { ...g, voteDayInfo: newVoteDayInfo, voteTable: newVoteTable };
+    });
+
+  const handleRemoveDay = (dayNum: number) =>
+    updateActive((g) => {
+      const keepIndices = g.voteDayInfo.map((_, i) => i).filter((i) => g.voteDayInfo[i].day !== dayNum);
+      const { [dayNum]: _removed, ...restMemos } = g.dayMemos;
+      return {
+        ...g,
+        voteTable: keepIndices.map((i) => g.voteTable[i]),
+        voteDayInfo: keepIndices.map((i) => g.voteDayInfo[i]),
+        dayMemos: restMemos,
+      };
+    });
 
   const handleUpdateMemo = (day: number, memo: string) =>
-    updateActive((g) => {
-      const dayMemos = [...g.dayMemos];
-      dayMemos[day] = memo;
-      return { ...g, dayMemos };
-    });
+    updateActive((g) => ({ ...g, dayMemos: { ...g.dayMemos, [day]: memo } }));
 
   const handleAddPlayer = () =>
     updateActive((g) => {
@@ -412,9 +460,11 @@ export default function App() {
               <VoteTable
                 players={activeGame.players}
                 voteTable={activeGame.voteTable}
+                voteDayInfo={activeGame.voteDayInfo}
                 dayMemos={activeGame.dayMemos}
                 onUpdateVote={handleUpdateVote}
                 onAddDay={handleAddDay}
+                onAddRound={handleAddRound}
                 onRemoveDay={handleRemoveDay}
                 onUpdateMemo={handleUpdateMemo}
               />

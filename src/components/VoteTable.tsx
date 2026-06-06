@@ -1,43 +1,57 @@
 import { useState } from 'react';
-import type { Player } from '../App';
+import type { Player, VoteDayInfo } from '../App';
 
-type SelectedDay  = 'all' | number;
-type ContentMode  = 'vote' | 'memo';
+type SelectedDay = 'all' | number;
+type ContentMode = 'vote' | 'memo';
 
 type Props = {
   players: Player[];
   voteTable: string[][];
-  dayMemos: string[];
-  onUpdateVote: (day: number, pi: number, value: string) => void;
+  voteDayInfo: VoteDayInfo[];
+  dayMemos: Record<number, string>;
+  onUpdateVote: (entryIndex: number, pi: number, value: string) => void;
   onAddDay: () => void;
+  onAddRound: (day: number) => void;
   onRemoveDay: (day: number) => void;
   onUpdateMemo: (day: number, memo: string) => void;
 };
 
+const getDayLabel = (info: VoteDayInfo) =>
+  info.round === 1 ? `${info.day}日目` : `${info.day}日目(${info.round}回目)`;
+
 export default function VoteTable({
-  players, voteTable, dayMemos,
-  onUpdateVote, onAddDay, onRemoveDay, onUpdateMemo,
+  players, voteTable, voteDayInfo, dayMemos,
+  onUpdateVote, onAddDay, onAddRound, onRemoveDay, onUpdateMemo,
 }: Props) {
-  const [contentMode, setContentMode]     = useState<ContentMode>('memo');
+  const [contentMode, setContentMode] = useState<ContentMode>('memo');
   const [selectedVoteDay, setSelectedVoteDay] = useState<SelectedDay>('all');
   const [selectedMemoDay, setSelectedMemoDay] = useState<SelectedDay>('all');
-  const [sortByVotes, setSortByVotes] = useState(false);
+  const [sortRoundIndex, setSortRoundIndex] = useState<number | null>(null);
+  const [hoveredCell, setHoveredCell] = useState<{ entryIdx: number; target: string } | null>(null);
 
-  const days = voteTable.length;
+  const uniqueDays = [...new Set(voteDayInfo.map((d) => d.day))];
 
-  const handleRemoveDay = (d: number) => {
-    if (!window.confirm(`${d + 1}日目を削除しますか？`)) return;
-    onRemoveDay(d);
-    if (selectedVoteDay === d) setSelectedVoteDay('all');
-    else if (typeof selectedVoteDay === 'number' && selectedVoteDay > d) setSelectedVoteDay(selectedVoteDay - 1);
-    if (selectedMemoDay === d) setSelectedMemoDay('all');
-    else if (typeof selectedMemoDay === 'number' && selectedMemoDay > d) setSelectedMemoDay(selectedMemoDay - 1);
+  const selectedDayEntries = typeof selectedVoteDay === 'number'
+    ? voteDayInfo.map((info, i) => ({ info, i })).filter(({ info }) => info.day === selectedVoteDay)
+    : [];
+
+  const handleRemoveDayTab = (dayNum: number) => {
+    if (!window.confirm(`${dayNum}日目を削除しますか？`)) return;
+    onRemoveDay(dayNum);
+    if (selectedVoteDay === dayNum) setSelectedVoteDay('all');
+    if (selectedMemoDay === dayNum) setSelectedMemoDay('all');
   };
 
-  const renderVoteSelect = (d: number, pi: number, ranks?: { counts: Record<string, number>; first: number; second: number }) => {
-    const val = voteTable[d]?.[pi] ?? '';
+  const renderVoteSelect = (
+    entryIdx: number,
+    pi: number,
+    ranks?: { counts: Record<string, number>; first: number; second: number },
+    enableHover?: boolean,
+  ) => {
+    const val = voteTable[entryIdx]?.[pi] ?? '';
     const selectedCnt = ranks && val ? (ranks.counts[val] ?? 0) : 0;
-    const selectColor = ranks && ranks.first > 0 && selectedCnt === ranks.first ? 'red'
+    const selectColor =
+      ranks && ranks.first > 0 && selectedCnt === ranks.first ? 'red'
       : ranks && ranks.second > 0 && selectedCnt === ranks.second ? 'dodgerblue'
       : undefined;
     return (
@@ -45,7 +59,9 @@ export default function VoteTable({
         className="vote-select"
         value={val}
         style={selectColor ? { color: selectColor } : undefined}
-        onChange={(e) => onUpdateVote(d, pi, e.target.value)}
+        onChange={(e) => onUpdateVote(entryIdx, pi, e.target.value)}
+        onMouseEnter={enableHover ? () => setHoveredCell({ entryIdx, target: voteTable[entryIdx]?.[pi] ?? '' }) : undefined}
+        onMouseLeave={enableHover ? () => setHoveredCell(null) : undefined}
       >
         <option value="" style={{ color: 'white' }}>-</option>
         {players.map((p) => (
@@ -57,17 +73,19 @@ export default function VoteTable({
     );
   };
 
-  const computeVoteRanks = (d: number) => {
+  const computeVoteRanks = (entryIndices: number[]) => {
     const counts: Record<string, number> = {};
-    players.forEach((_, pi) => {
-      const voted = voteTable[d]?.[pi];
-      if (voted) counts[voted] = (counts[voted] ?? 0) + 1;
+    entryIndices.forEach((idx) => {
+      players.forEach((_, pi) => {
+        const voted = voteTable[idx]?.[pi];
+        if (voted) counts[voted] = (counts[voted] ?? 0) + 1;
+      });
     });
     const sorted = [...new Set(Object.values(counts))].sort((a, b) => b - a);
     return { counts, first: sorted[0] ?? 0, second: sorted[1] ?? 0 };
   };
 
-  const singleDayRanks = typeof selectedVoteDay === 'number' ? computeVoteRanks(selectedVoteDay) : null;
+  const roundRanks = selectedDayEntries.map(({ i }) => computeVoteRanks([i]));
 
   if (players.length === 0) {
     return (
@@ -77,7 +95,74 @@ export default function VoteTable({
     );
   }
 
-  const dayLabels = Array.from({ length: days }, (_, d) => `${d + 1}日目`);
+  const renderSingleDayView = () => {
+    const playerEntries = players.map((player, pi) => ({ player, pi }));
+    const totalRounds = selectedDayEntries.length;
+    if (sortRoundIndex !== null) {
+      const ranks = roundRanks[sortRoundIndex];
+      const entryIdx = selectedDayEntries[sortRoundIndex]?.i;
+      if (ranks && entryIdx !== undefined) {
+        playerEntries.sort((a, b) => {
+          const votedA = voteTable[entryIdx]?.[a.pi] ?? '';
+          const votedB = voteTable[entryIdx]?.[b.pi] ?? '';
+          const cntA = votedA ? (ranks.counts[votedA] ?? 0) : -1;
+          const cntB = votedB ? (ranks.counts[votedB] ?? 0) : -1;
+          return cntB - cntA;
+        });
+      }
+    }
+    return (
+      <>
+        <table className="vote-table">
+          <thead>
+            <tr>
+              <th
+                className={`vote-th vote-th--player vote-th--sortable${sortRoundIndex === null ? ' vote-th--sorted' : ''}`}
+                onClick={() => { setSortRoundIndex(null); }}
+              >
+                プレイヤー
+                <span className="vote-th-sort-icon">{sortRoundIndex === null ? '⇅' : '↺'}</span>
+              </th>
+              {selectedDayEntries.map(({ info }, ri) => (
+                <th
+                  key={info.round}
+                  className={`vote-th vote-th--day vote-th--sortable${sortRoundIndex === ri ? ' vote-th--sorted' : ''}`}
+                  onClick={() => setSortRoundIndex(ri)}
+                >
+                  {totalRounds === 1 ? '投票先' : `${info.round}回目`}
+                  <span className="vote-th-sort-icon">{sortRoundIndex === ri ? '▼' : '⇅'}</span>
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {playerEntries.map(({ player, pi }) => {
+              const isTarget = hoveredCell !== null && hoveredCell.target !== ''
+                && String(player.number) === hoveredCell.target;
+              const isVoter = hoveredCell !== null && hoveredCell.target !== ''
+                && voteTable[hoveredCell.entryIdx]?.[pi] === hoveredCell.target;
+              const rowClass = `vote-row${isTarget ? ' vote-row--hl-target' : isVoter ? ' vote-row--hl-voter' : ''}`;
+              return (
+                <tr key={pi} className={rowClass}>
+                  <td className="vote-td vote-td--player">
+                    <span className="vote-player-num">{player.number}</span>
+                    <span className="vote-player-name-ro">{player.name || <span className="vote-placeholder">—</span>}</span>
+                  </td>
+                  {selectedDayEntries.map(({ i: entryIdx }, ri) => (
+                    <td key={entryIdx} className="vote-td vote-td--cell">
+                      {renderVoteSelect(entryIdx, pi, roundRanks[ri], true)}
+                    </td>
+                  ))}
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </>
+    );
+  };
+
+  const allEntryCount = voteTable.length;
 
   return (
     <div className="vote-container">
@@ -87,12 +172,12 @@ export default function VoteTable({
           className={`vote-day-tab vote-day-tab--memo${contentMode === 'memo' && selectedMemoDay === 'all' ? ' vote-day-tab--memo-active' : ''}`}
           onClick={() => { setContentMode('memo'); setSelectedMemoDay('all'); }}
         >全体</button>
-        {dayLabels.map((label, d) => (
+        {uniqueDays.map((dayNum) => (
           <button
-            key={d}
-            className={`vote-day-tab vote-day-tab--memo${contentMode === 'memo' && selectedMemoDay === d ? ' vote-day-tab--memo-active' : ''}`}
-            onClick={() => { setContentMode('memo'); setSelectedMemoDay(d); }}
-          >{label}</button>
+            key={dayNum}
+            className={`vote-day-tab vote-day-tab--memo${contentMode === 'memo' && selectedMemoDay === dayNum ? ' vote-day-tab--memo-active' : ''}`}
+            onClick={() => { setContentMode('memo'); setSelectedMemoDay(dayNum); }}
+          >{dayNum}日目</button>
         ))}
       </div>
 
@@ -100,25 +185,28 @@ export default function VoteTable({
       <div className="vote-day-tabs">
         <button
           className={`vote-day-tab${contentMode === 'vote' && selectedVoteDay === 'all' ? ' vote-day-tab--active' : ''}`}
-          onClick={() => { setContentMode('vote'); setSelectedVoteDay('all'); }}
+          onClick={() => { setContentMode('vote'); setSelectedVoteDay('all'); setSortRoundIndex(null); }}
         >全体</button>
-        {dayLabels.map((label, d) => (
+        {uniqueDays.map((dayNum, idx) => (
           <button
-            key={d}
-            className={`vote-day-tab${contentMode === 'vote' && selectedVoteDay === d ? ' vote-day-tab--active' : ''}`}
-            onClick={() => { setContentMode('vote'); setSelectedVoteDay(d); }}
+            key={dayNum}
+            className={`vote-day-tab${contentMode === 'vote' && selectedVoteDay === dayNum ? ' vote-day-tab--active' : ''}`}
+            onClick={() => { setContentMode('vote'); setSelectedVoteDay(dayNum); setSortRoundIndex(null); }}
           >
-            {label}
-            {d === days - 1 && (
+            {dayNum}日目
+            {idx === uniqueDays.length - 1 && (
               <span
                 className="vote-day-tab-del"
-                onClick={(e) => { e.stopPropagation(); handleRemoveDay(d); }}
+                onClick={(e) => { e.stopPropagation(); handleRemoveDayTab(dayNum); }}
                 title="この日を削除"
               >×</span>
             )}
           </button>
         ))}
         <button className="vote-add-btn" onClick={onAddDay}>＋ 日を追加</button>
+        {typeof selectedVoteDay === 'number' && (
+          <button className="vote-add-btn" onClick={() => onAddRound(selectedVoteDay)}>＋ 再投票</button>
+        )}
       </div>
 
       {/* コンテンツ */}
@@ -128,8 +216,8 @@ export default function VoteTable({
             <thead>
               <tr>
                 <th className="vote-th vote-th--player">プレイヤー</th>
-                {dayLabels.map((label, d) => (
-                  <th key={d} className="vote-th vote-th--day">{label}</th>
+                {voteDayInfo.map((info, d) => (
+                  <th key={d} className="vote-th vote-th--day">{getDayLabel(info)}</th>
                 ))}
               </tr>
             </thead>
@@ -140,7 +228,7 @@ export default function VoteTable({
                     <span className="vote-player-num">{player.number}</span>
                     <span className="vote-player-name-ro">{player.name || <span className="vote-placeholder">—</span>}</span>
                   </td>
-                  {Array.from({ length: days }, (_, d) => (
+                  {Array.from({ length: allEntryCount }, (_, d) => (
                     <td key={d} className="vote-td vote-td--cell">{renderVoteSelect(d, pi)}</td>
                   ))}
                   <td className="vote-td vote-td--empty" />
@@ -148,71 +236,24 @@ export default function VoteTable({
               ))}
             </tbody>
           </table>
-        ) : (() => {
-          const playerEntries = players.map((player, pi) => ({ player, pi }));
-          if (sortByVotes && singleDayRanks) {
-            playerEntries.sort((a, b) => {
-              const votedA = voteTable[selectedVoteDay]?.[a.pi] ?? '';
-              const votedB = voteTable[selectedVoteDay]?.[b.pi] ?? '';
-              const ca = votedA ? (singleDayRanks.counts[votedA] ?? 0) : -1;
-              const cb = votedB ? (singleDayRanks.counts[votedB] ?? 0) : -1;
-              return cb - ca;
-            });
-          }
-          return (
-            <>
-              <div className="vote-sort-bar">
-                <button
-                  className={`vote-sort-btn${sortByVotes ? ' vote-sort-btn--active' : ''}`}
-                  onClick={() => setSortByVotes(v => !v)}
-                >得票数順{sortByVotes ? ' ON' : ' OFF'}</button>
-              </div>
-              <table className="vote-table">
-                <thead>
-                  <tr>
-                    <th className="vote-th vote-th--player">プレイヤー</th>
-                    <th className="vote-th vote-th--day">{selectedVoteDay + 1}日目 投票先</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {playerEntries.map(({ player, pi }) => {
-                    const cnt = singleDayRanks ? (singleDayRanks.counts[String(player.number)] ?? 0) : 0;
-                    const nameColor = singleDayRanks && singleDayRanks.first > 0 && cnt === singleDayRanks.first ? 'red'
-                      : singleDayRanks && singleDayRanks.second > 0 && cnt === singleDayRanks.second ? 'dodgerblue'
-                      : undefined;
-                    return (
-                      <tr key={pi} className="vote-row">
-                        <td className="vote-td vote-td--player">
-                          <span className="vote-player-num" style={nameColor ? { color: nameColor } : undefined}>{player.number}</span>
-                          <span className="vote-player-name-ro" style={nameColor ? { color: nameColor } : undefined}>{player.name || <span className="vote-placeholder">—</span>}</span>
-                        </td>
-                        <td className="vote-td vote-td--cell">{renderVoteSelect(selectedVoteDay, pi, singleDayRanks ?? undefined)}</td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </>
-          );
-        })()
+        ) : renderSingleDayView()
       ) : (
-        /* メモビュー */
         selectedMemoDay === 'all' ? (
           <div className="memo-all">
-            {dayLabels.map((label, d) => (
-              <div key={d} className="memo-all-item">
-                <span className="memo-all-label">{label}</span>
-                <span className="memo-all-text">{dayMemos[d] || <span className="vote-placeholder">（メモなし）</span>}</span>
+            {uniqueDays.map((dayNum) => (
+              <div key={dayNum} className="memo-all-item">
+                <span className="memo-all-label">{dayNum}日目</span>
+                <span className="memo-all-text">{dayMemos[dayNum] || <span className="vote-placeholder">（メモなし）</span>}</span>
               </div>
             ))}
           </div>
         ) : (
           <div className="memo-section">
-            <label className="memo-label">{selectedMemoDay + 1}日目 メモ</label>
+            <label className="memo-label">{selectedMemoDay}日目 メモ</label>
             <textarea
               className="memo-textarea"
-              value={dayMemos[selectedMemoDay] ?? ''}
-              onChange={(e) => onUpdateMemo(selectedMemoDay, e.target.value)}
+              value={typeof selectedMemoDay === 'number' ? (dayMemos[selectedMemoDay] ?? '') : ''}
+              onChange={(e) => { if (typeof selectedMemoDay === 'number') onUpdateMemo(selectedMemoDay, e.target.value); }}
               placeholder="この日のメモを入力..."
               rows={40}
             />
