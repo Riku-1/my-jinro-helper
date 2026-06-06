@@ -263,6 +263,10 @@
   vertical-align: middle;
 }
 
+.vote-row:nth-child(even) .vote-td { background: #0f172a; }
+.vote-row:nth-child(even) .vote-td--player { background: #162032; }
+.vote-row:nth-child(even) .vote-select { background: #0f172a; }
+
 .vote-td--player {
   display: flex;
   align-items: center;
