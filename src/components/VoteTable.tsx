@@ -107,7 +107,8 @@ export default function VoteTable({
           const votedB = voteTable[entryIdx]?.[b.pi] ?? '';
           const cntA = votedA ? (ranks.counts[votedA] ?? 0) : -1;
           const cntB = votedB ? (ranks.counts[votedB] ?? 0) : -1;
-          return cntB - cntA;
+          if (cntB !== cntA) return cntB - cntA;
+          return votedA.localeCompare(votedB, undefined, { numeric: true });
         });
       }
     }
