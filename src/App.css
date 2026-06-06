@@ -267,6 +267,14 @@
 .vote-row:nth-child(even) .vote-td--player { background: #162032; }
 .vote-row:nth-child(even) .vote-select { background: #0f172a; }
 
+.vote-row--hl-target .vote-td,
+.vote-row--hl-target .vote-select { background: rgba(251, 191, 36, 0.18) !important; }
+.vote-row--hl-target .vote-td--player { background: rgba(251, 191, 36, 0.25) !important; }
+
+.vote-row--hl-voter .vote-td,
+.vote-row--hl-voter .vote-select { background: rgba(99, 179, 237, 0.15) !important; }
+.vote-row--hl-voter .vote-td--player { background: rgba(99, 179, 237, 0.2) !important; }
+
 .vote-td--player {
   display: flex;
   align-items: center;

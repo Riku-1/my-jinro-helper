@@ -27,6 +27,7 @@ export default function VoteTable({
   const [selectedVoteDay, setSelectedVoteDay] = useState<SelectedDay>('all');
   const [selectedMemoDay, setSelectedMemoDay] = useState<SelectedDay>('all');
   const [sortRoundIndex, setSortRoundIndex] = useState<number | null>(null);
+  const [hoveredCell, setHoveredCell] = useState<{ entryIdx: number; target: string } | null>(null);
 
   const uniqueDays = [...new Set(voteDayInfo.map((d) => d.day))];
 
@@ -45,6 +46,7 @@ export default function VoteTable({
     entryIdx: number,
     pi: number,
     ranks?: { counts: Record<string, number>; first: number; second: number },
+    enableHover?: boolean,
   ) => {
     const val = voteTable[entryIdx]?.[pi] ?? '';
     const selectedCnt = ranks && val ? (ranks.counts[val] ?? 0) : 0;
@@ -58,6 +60,8 @@ export default function VoteTable({
         value={val}
         style={selectColor ? { color: selectColor } : undefined}
         onChange={(e) => onUpdateVote(entryIdx, pi, e.target.value)}
+        onMouseEnter={enableHover ? () => setHoveredCell({ entryIdx, target: voteTable[entryIdx]?.[pi] ?? '' }) : undefined}
+        onMouseLeave={enableHover ? () => setHoveredCell(null) : undefined}
       >
         <option value="" style={{ color: 'white' }}>-</option>
         {players.map((p) => (
@@ -133,15 +137,20 @@ export default function VoteTable({
           </thead>
           <tbody>
             {playerEntries.map(({ player, pi }) => {
+              const isTarget = hoveredCell !== null && hoveredCell.target !== ''
+                && String(player.number) === hoveredCell.target;
+              const isVoter = hoveredCell !== null && hoveredCell.target !== ''
+                && voteTable[hoveredCell.entryIdx]?.[pi] === hoveredCell.target;
+              const rowClass = `vote-row${isTarget ? ' vote-row--hl-target' : isVoter ? ' vote-row--hl-voter' : ''}`;
               return (
-                <tr key={pi} className="vote-row">
+                <tr key={pi} className={rowClass}>
                   <td className="vote-td vote-td--player">
                     <span className="vote-player-num">{player.number}</span>
                     <span className="vote-player-name-ro">{player.name || <span className="vote-placeholder">—</span>}</span>
                   </td>
                   {selectedDayEntries.map(({ i: entryIdx }, ri) => (
                     <td key={entryIdx} className="vote-td vote-td--cell">
-                      {renderVoteSelect(entryIdx, pi, roundRanks[ri])}
+                      {renderVoteSelect(entryIdx, pi, roundRanks[ri], true)}
                     </td>
                   ))}
                 </tr>
