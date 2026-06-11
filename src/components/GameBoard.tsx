@@ -15,6 +15,7 @@ type Props = {
   image: string | null;
   boardMode: 'image' | 'tile';
   players: Player[];
+  tileCols: number;
   placedIcons: PlacedIconType[];
   placedComments: PlacedCommentType[];
   onDropIcon: (iconDef: IconDef, x: number, y: number, resolvedColor?: string) => void;
@@ -25,16 +26,10 @@ type Props = {
   onRemoveComment: (id: string) => void;
 };
 
-function getTileCols(n: number): number {
-  if (n <= 1) return 1;
-  if (n <= 4) return 2;
-  if (n <= 9) return 3;
-  return 4;
-}
 
 export default function GameBoard({
   layoutVersion,
-  image, boardMode, players, placedIcons, placedComments,
+  image, boardMode, players, tileCols, placedIcons, placedComments,
   onDropIcon, onMoveIcon, onRemoveIcon,
   onDropComment, onMoveComment, onRemoveComment,
 }: Props) {
@@ -129,7 +124,6 @@ export default function GameBoard({
     e.dataTransfer.effectAllowed = 'copyMove';
   };
 
-  const tileCols = getTileCols(players.length);
   const tileRows = Math.ceil(players.length / tileCols);
 
   if (boardMode === 'tile' && players.length === 0) {

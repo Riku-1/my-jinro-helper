@@ -42,6 +42,7 @@ export type Game = {
   name: string;
   boardImage: string | null;
   boardMode: 'image' | 'tile';
+  boardTileCols: number | null;
   placedIcons: PlacedIcon[];
   placedComments: PlacedComment[];
   players: Player[];
@@ -63,10 +64,17 @@ type HistoryEntry = {
 
 type ViewMode = 'board' | 'vote';
 
+function getTileCols(n: number): number {
+  if (n <= 1) return 1;
+  if (n <= 4) return 2;
+  if (n <= 9) return 3;
+  return 4;
+}
+
 function newGame(name: string): Game {
   return {
     id: crypto.randomUUID(), name,
-    boardImage: null, boardMode: 'tile', placedIcons: [], placedComments: [],
+    boardImage: null, boardMode: 'tile', boardTileCols: null, placedIcons: [], placedComments: [],
     players: [],
     voteTable: Array.from({ length: 5 }, () => []),
     dayMemos: { 1: '', 2: '', 3: '', 4: '', 5: '' },
@@ -108,6 +116,7 @@ function loadState(): AppState {
           voteTable: Array.from({ length: 5 }, () => [] as string[]),
           ...g,
           boardMode: ((g as any).boardMode ?? (g.boardImage ? 'image' : 'tile')) as 'image' | 'tile',
+          boardTileCols: (g as any).boardTileCols ?? null,
           voteDayInfo,
           dayMemos,
         };
@@ -211,6 +220,9 @@ export default function App() {
 
   const handleSetBoardMode = (mode: 'image' | 'tile') =>
     updateActive((g) => ({ ...g, boardMode: mode }));
+
+  const handleSetTileCols = (cols: number | null) =>
+    updateActive((g) => ({ ...g, boardTileCols: cols }));
 
   // Image
   const readImageFile = useCallback((file: File | null | undefined) => {
@@ -405,6 +417,7 @@ export default function App() {
   }, []);
 
   const hasAnyPlacement = activeGame.placedIcons.length > 0 || activeGame.placedComments.length > 0;
+  const effectiveTileCols = activeGame.boardTileCols ?? getTileCols(activeGame.players.length);
 
   return (
     <div className="app">
@@ -425,6 +438,25 @@ export default function App() {
               >画像</button>
             </div>
           </div>
+          {activeGame.boardMode === 'tile' && activeGame.players.length > 0 && (
+            <div className="tile-cols-row">
+              <span className="board-mode-label">列数</span>
+              <div className="tile-cols-ctrl">
+                <button
+                  className="tile-cols-btn"
+                  onClick={() => handleSetTileCols(Math.max(1, effectiveTileCols - 1))}
+                >−</button>
+                <span className="tile-cols-val">{effectiveTileCols}</span>
+                <button
+                  className="tile-cols-btn"
+                  onClick={() => handleSetTileCols(Math.min(activeGame.players.length, effectiveTileCols + 1))}
+                >＋</button>
+                {activeGame.boardTileCols !== null && (
+                  <button className="tile-cols-reset" onClick={() => handleSetTileCols(null)}>自動</button>
+                )}
+              </div>
+            </div>
+          )}
           <label className="btn btn-primary">
             画像を選択
             <input type="file" accept="image/*" onChange={handleImageUpload} hidden />
@@ -465,6 +497,7 @@ export default function App() {
                 image={activeGame.boardImage}
                 boardMode={activeGame.boardMode}
                 players={activeGame.players}
+                tileCols={effectiveTileCols}
                 placedIcons={activeGame.placedIcons}
                 placedComments={activeGame.placedComments}
                 onDropIcon={handleDropIcon}
