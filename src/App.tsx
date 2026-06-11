@@ -41,6 +41,7 @@ export type Game = {
   id: string;
   name: string;
   boardImage: string | null;
+  boardMode: 'image' | 'tile';
   placedIcons: PlacedIcon[];
   placedComments: PlacedComment[];
   players: Player[];
@@ -65,7 +66,7 @@ type ViewMode = 'board' | 'vote';
 function newGame(name: string): Game {
   return {
     id: crypto.randomUUID(), name,
-    boardImage: null, placedIcons: [], placedComments: [],
+    boardImage: null, boardMode: 'tile', placedIcons: [], placedComments: [],
     players: [],
     voteTable: Array.from({ length: 5 }, () => []),
     dayMemos: { 1: '', 2: '', 3: '', 4: '', 5: '' },
@@ -106,6 +107,7 @@ function loadState(): AppState {
           players: [] as Player[],
           voteTable: Array.from({ length: 5 }, () => [] as string[]),
           ...g,
+          boardMode: ((g as any).boardMode ?? (g.boardImage ? 'image' : 'tile')) as 'image' | 'tile',
           voteDayInfo,
           dayMemos,
         };
@@ -206,6 +208,9 @@ export default function App() {
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [undo, redo]);
+
+  const handleSetBoardMode = (mode: 'image' | 'tile') =>
+    updateActive((g) => ({ ...g, boardMode: mode }));
 
   // Image
   const readImageFile = useCallback((file: File | null | undefined) => {
@@ -407,6 +412,19 @@ export default function App() {
         <h1 className="app-title">人狼ヘルパー</h1>
         <IconPalette placedIcons={activeGame.placedIcons} />
         <div className="controls">
+          <div className="board-mode-row">
+            <span className="board-mode-label">ボード</span>
+            <div className="btn-row" style={{ flex: 1 }}>
+              <button
+                className={`btn btn-half ${activeGame.boardMode === 'tile' ? 'btn-primary' : 'btn-secondary'}`}
+                onClick={() => handleSetBoardMode('tile')}
+              >タイル</button>
+              <button
+                className={`btn btn-half ${activeGame.boardMode === 'image' ? 'btn-primary' : 'btn-secondary'}`}
+                onClick={() => handleSetBoardMode('image')}
+              >画像</button>
+            </div>
+          </div>
           <label className="btn btn-primary">
             画像を選択
             <input type="file" accept="image/*" onChange={handleImageUpload} hidden />
@@ -445,6 +463,8 @@ export default function App() {
               <GameBoard
                 layoutVersion={splitRatio}
                 image={activeGame.boardImage}
+                boardMode={activeGame.boardMode}
+                players={activeGame.players}
                 placedIcons={activeGame.placedIcons}
                 placedComments={activeGame.placedComments}
                 onDropIcon={handleDropIcon}

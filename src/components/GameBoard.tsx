@@ -2,7 +2,7 @@ import { useRef, useState, useEffect, useMemo, useCallback, useLayoutEffect } fr
 import PlacedIcon from './PlacedIcon';
 import PlacedComment from './PlacedComment';
 import type { IconDef } from '../constants/icons';
-import type { PlacedIcon as PlacedIconType, PlacedComment as PlacedCommentType } from '../App';
+import type { PlacedIcon as PlacedIconType, PlacedComment as PlacedCommentType, Player } from '../App';
 
 type DragPayload =
   | { type: 'new'; iconDef: IconDef; resolvedColor?: string }
@@ -13,6 +13,8 @@ type DragPayload =
 type Props = {
   layoutVersion?: number;
   image: string | null;
+  boardMode: 'image' | 'tile';
+  players: Player[];
   placedIcons: PlacedIconType[];
   placedComments: PlacedCommentType[];
   onDropIcon: (iconDef: IconDef, x: number, y: number, resolvedColor?: string) => void;
@@ -23,9 +25,16 @@ type Props = {
   onRemoveComment: (id: string) => void;
 };
 
+function getTileCols(n: number): number {
+  if (n <= 1) return 1;
+  if (n <= 4) return 2;
+  if (n <= 9) return 3;
+  return 4;
+}
+
 export default function GameBoard({
   layoutVersion,
-  image, placedIcons, placedComments,
+  image, boardMode, players, placedIcons, placedComments,
   onDropIcon, onMoveIcon, onRemoveIcon,
   onDropComment, onMoveComment, onRemoveComment,
 }: Props) {
@@ -120,7 +129,21 @@ export default function GameBoard({
     e.dataTransfer.effectAllowed = 'copyMove';
   };
 
-  if (!image) {
+  const tileCols = getTileCols(players.length);
+  const tileRows = Math.ceil(players.length / tileCols);
+
+  if (boardMode === 'tile' && players.length === 0) {
+    return (
+      <div className="board-placeholder">
+        <div>
+          <p>プレイヤーを追加してください</p>
+          <p className="placeholder-sub">上のタブ「プレイヤー管理」から追加</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (boardMode === 'image' && !image) {
     return (
       <div className="board-placeholder">
         <div>
@@ -135,12 +158,31 @@ export default function GameBoard({
     <div ref={viewportRef} className="board-viewport">
       <div
         ref={boardRef}
-        className="game-board"
-        style={boardSize ? { width: boardSize.width, height: boardSize.height } : undefined}
+        className={`game-board${boardMode === 'tile' ? ' game-board--tile' : ''}`}
+        style={boardMode === 'image' && boardSize ? { width: boardSize.width, height: boardSize.height } : undefined}
         onDragOver={handleDragOver}
         onDrop={handleDrop}
       >
-        <img src={image} alt="board" className="board-image" draggable={false} onLoad={handleImageLoad} />
+        {boardMode === 'image' ? (
+          <img src={image!} alt="board" className="board-image" draggable={false} onLoad={handleImageLoad} />
+        ) : (
+          <div
+            className="tile-grid"
+            style={{ '--tile-cols': tileCols } as React.CSSProperties}
+          >
+            {players.map((player) => (
+              <div key={player.number} className="player-tile">
+                <span className="player-tile-num">{player.number}</span>
+                <span className="player-tile-name">
+                  {player.name || <span className="player-tile-empty-name">（未設定）</span>}
+                </span>
+              </div>
+            ))}
+            {Array.from({ length: tileCols * tileRows - players.length }).map((_, i) => (
+              <div key={`empty-${i}`} className="player-tile player-tile--empty" />
+            ))}
+          </div>
+        )}
         {placedIcons.map((icon) => (
           <PlacedIcon key={icon.id} icon={icon} onDragStart={handleIconDragStart} onRemove={() => onRemoveIcon(icon.id)} />
         ))}
