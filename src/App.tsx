@@ -47,6 +47,7 @@ export type Game = {
   placedComments: PlacedComment[];
   players: Player[];
   voteTable: string[][];       // voteTable[entryIndex][playerIndex]
+  voteOrder: (number | null)[][]; // voteOrder[entryIndex][playerIndex] = 投票順番号
   dayMemos: Record<number, string>; // dayMemos[logicalDay]
   voteDayInfo: VoteDayInfo[];  // voteDayInfo[entryIndex]
 };
@@ -77,6 +78,7 @@ function newGame(name: string): Game {
     boardImage: null, boardMode: 'tile', boardTileCols: null, placedIcons: [], placedComments: [],
     players: [],
     voteTable: Array.from({ length: 5 }, () => []),
+    voteOrder: Array.from({ length: 5 }, () => []),
     dayMemos: { 1: '', 2: '', 3: '', 4: '', 5: '' },
     voteDayInfo: Array.from({ length: 5 }, (_, i) => ({ day: i + 1, round: 1 })),
   };
@@ -111,6 +113,10 @@ function loadState(): AppState {
         } else {
           dayMemos = rawMemos ?? {};
         }
+        const voteOrder: (number | null)[][] = (g as any).voteOrder
+          ?? Array.from({ length: voteDayInfo.length }, (_, i) =>
+            Array((g.voteTable?.[i] ?? []).length).fill(null),
+          );
         const merged = {
           players: [] as Player[],
           voteTable: Array.from({ length: 5 }, () => [] as string[]),
@@ -119,6 +125,7 @@ function loadState(): AppState {
           boardTileCols: (g as any).boardTileCols ?? null,
           voteDayInfo,
           dayMemos,
+          voteOrder,
         };
         return merged;
       });
@@ -260,11 +267,33 @@ export default function App() {
   const handleClearAll = () => { pushHistory(); updateActive((g) => ({ ...g, placedIcons: [], placedComments: [] })); };
 
   // Vote handlers
-  const handleUpdateVote = (day: number, pi: number, value: string) =>
+  const handleUpdateVote = (entryIndex: number, pi: number, value: string) =>
     updateActive((g) => {
       const table = g.voteTable.map((r) => [...r]);
-      if (table[day]) table[day][pi] = value;
-      return { ...g, voteTable: table };
+      if (!table[entryIndex]) return g;
+      const prevValue = table[entryIndex][pi] ?? '';
+      table[entryIndex][pi] = value;
+
+      const order = (g.voteOrder ?? []).map((r) => [...r]);
+      while (order.length <= entryIndex) order.push([]);
+      while (order[entryIndex].length <= pi) order[entryIndex].push(null);
+
+      const wasVoted = prevValue !== '';
+      const isVoted = value !== '';
+      if (!wasVoted && isVoted) {
+        const maxOrd = Math.max(0, ...order[entryIndex].filter((n): n is number => n !== null));
+        order[entryIndex][pi] = maxOrd + 1;
+      } else if (wasVoted && !isVoted) {
+        const removedOrd = order[entryIndex][pi];
+        order[entryIndex][pi] = null;
+        if (removedOrd !== null) {
+          order[entryIndex] = order[entryIndex].map((n) =>
+            n !== null && n > removedOrd ? n - 1 : n,
+          );
+        }
+      }
+
+      return { ...g, voteTable: table, voteOrder: order };
     });
 
   const handleAddDay = () =>
@@ -274,6 +303,7 @@ export default function App() {
       return {
         ...g,
         voteTable: [...g.voteTable, Array(g.players.length).fill('')],
+        voteOrder: [...(g.voteOrder ?? []), Array(g.players.length).fill(null)],
         dayMemos: { ...g.dayMemos, [newDay]: '' },
         voteDayInfo: [...g.voteDayInfo, { day: newDay, round: 1 }],
       };
@@ -288,7 +318,9 @@ export default function App() {
       newVoteDayInfo.splice(insertAt, 0, { day: dayNum, round: maxRound + 1 });
       const newVoteTable = [...g.voteTable];
       newVoteTable.splice(insertAt, 0, Array(g.players.length).fill(''));
-      return { ...g, voteDayInfo: newVoteDayInfo, voteTable: newVoteTable };
+      const newVoteOrder = [...(g.voteOrder ?? [])];
+      newVoteOrder.splice(insertAt, 0, Array(g.players.length).fill(null));
+      return { ...g, voteDayInfo: newVoteDayInfo, voteTable: newVoteTable, voteOrder: newVoteOrder };
     });
 
   const handleRemoveDay = (dayNum: number) =>
@@ -298,6 +330,7 @@ export default function App() {
       return {
         ...g,
         voteTable: keepIndices.map((i) => g.voteTable[i]),
+        voteOrder: keepIndices.map((i) => (g.voteOrder ?? [])[i] ?? []),
         voteDayInfo: keepIndices.map((i) => g.voteDayInfo[i]),
         dayMemos: restMemos,
       };
@@ -313,6 +346,7 @@ export default function App() {
         ...g,
         players: [...g.players, { number: nextNum, name: '' }],
         voteTable: g.voteTable.map((day) => [...day, '']),
+        voteOrder: (g.voteOrder ?? []).map((row) => [...row, null]),
       };
     });
 
@@ -321,6 +355,7 @@ export default function App() {
       ...g,
       players: g.players.filter((_, i) => i !== pi),
       voteTable: g.voteTable.map((day) => day.filter((_, i) => i !== pi)),
+      voteOrder: (g.voteOrder ?? []).map((row) => row.filter((_, i) => i !== pi)),
     }));
 
   const handleUpdatePlayer = (pi: number, player: Player) =>
@@ -340,7 +375,12 @@ export default function App() {
         if (diff < 0) return day.slice(0, newPlayers.length);
         return [...day];
       });
-      return { ...g, players: newPlayers, voteTable };
+      const voteOrder = (g.voteOrder ?? []).map((row) => {
+        if (diff > 0) return [...row, ...Array(diff).fill(null)];
+        if (diff < 0) return row.slice(0, newPlayers.length);
+        return [...row];
+      });
+      return { ...g, players: newPlayers, voteTable, voteOrder };
     });
   };
 
@@ -366,17 +406,20 @@ export default function App() {
       if (count > g.players.length) {
         const players = [...g.players];
         const voteTable = g.voteTable.map((day) => [...day]);
+        const voteOrder = (g.voteOrder ?? g.voteTable.map((day) => day.map(() => null as number | null))).map((row) => [...row]);
         for (let i = g.players.length; i < count; i++) {
           const num = players.length > 0 ? Math.max(...players.map((p) => p.number)) + 1 : i + 1;
           players.push({ number: num, name: '' });
           voteTable.forEach((day) => day.push(''));
+          voteOrder.forEach((row) => row.push(null));
         }
-        return { ...g, players, voteTable };
+        return { ...g, players, voteTable, voteOrder };
       } else {
         return {
           ...g,
           players: g.players.slice(0, count),
           voteTable: g.voteTable.map((day) => day.slice(0, count)),
+          voteOrder: (g.voteOrder ?? []).map((row) => row.slice(0, count)),
         };
       }
     });
@@ -513,6 +556,7 @@ export default function App() {
               <VoteTable
                 players={activeGame.players}
                 voteTable={activeGame.voteTable}
+                voteOrder={activeGame.voteOrder ?? []}
                 voteDayInfo={activeGame.voteDayInfo}
                 dayMemos={activeGame.dayMemos}
                 onUpdateVote={handleUpdateVote}

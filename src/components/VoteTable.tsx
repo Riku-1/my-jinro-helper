@@ -7,6 +7,7 @@ type ContentMode = 'vote' | 'memo';
 type Props = {
   players: Player[];
   voteTable: string[][];
+  voteOrder: (number | null)[][];
   voteDayInfo: VoteDayInfo[];
   dayMemos: Record<number, string>;
   onUpdateVote: (entryIndex: number, pi: number, value: string) => void;
@@ -20,7 +21,7 @@ const getDayLabel = (info: VoteDayInfo) =>
   info.round === 1 ? `${info.day}日目` : `${info.day}日目(${info.round}回目)`;
 
 export default function VoteTable({
-  players, voteTable, voteDayInfo, dayMemos,
+  players, voteTable, voteOrder, voteDayInfo, dayMemos,
   onUpdateVote, onAddDay, onAddRound, onRemoveDay, onUpdateMemo,
 }: Props) {
   const [contentMode, setContentMode] = useState<ContentMode>('memo');
@@ -47,6 +48,7 @@ export default function VoteTable({
     pi: number,
     ranks?: { counts: Record<string, number>; first: number; second: number },
     enableHover?: boolean,
+    orderNum?: number | null,
   ) => {
     const val = voteTable[entryIdx]?.[pi] ?? '';
     const selectedCnt = ranks && val ? (ranks.counts[val] ?? 0) : 0;
@@ -55,21 +57,24 @@ export default function VoteTable({
       : ranks && ranks.second > 0 && selectedCnt === ranks.second ? 'dodgerblue'
       : undefined;
     return (
-      <select
-        className="vote-select"
-        value={val}
-        style={selectColor ? { color: selectColor } : undefined}
-        onChange={(e) => onUpdateVote(entryIdx, pi, e.target.value)}
-        onMouseEnter={enableHover ? () => setHoveredCell({ entryIdx, target: voteTable[entryIdx]?.[pi] ?? '' }) : undefined}
-        onMouseLeave={enableHover ? () => setHoveredCell(null) : undefined}
-      >
-        <option value="" style={{ color: 'white' }}>-</option>
-        {players.map((p) => (
-          <option key={p.number} value={String(p.number)} style={{ color: 'white' }}>
-            {p.number}{p.name ? ` ${p.name}` : ''}
-          </option>
-        ))}
-      </select>
+      <div className="vote-cell-wrap">
+        <span className="vote-order-badge">{orderNum != null ? orderNum : ''}</span>
+        <select
+          className="vote-select"
+          value={val}
+          style={selectColor ? { color: selectColor } : undefined}
+          onChange={(e) => onUpdateVote(entryIdx, pi, e.target.value)}
+          onMouseEnter={enableHover ? () => setHoveredCell({ entryIdx, target: voteTable[entryIdx]?.[pi] ?? '' }) : undefined}
+          onMouseLeave={enableHover ? () => setHoveredCell(null) : undefined}
+        >
+          <option value="" style={{ color: 'white' }}>-</option>
+          {players.map((p) => (
+            <option key={p.number} value={String(p.number)} style={{ color: 'white' }}>
+              {p.number}{p.name ? ` ${p.name}` : ''}
+            </option>
+          ))}
+        </select>
+      </div>
     );
   };
 
@@ -151,7 +156,7 @@ export default function VoteTable({
                   </td>
                   {selectedDayEntries.map(({ i: entryIdx }, ri) => (
                     <td key={entryIdx} className="vote-td vote-td--cell">
-                      {renderVoteSelect(entryIdx, pi, roundRanks[ri], true)}
+                      {renderVoteSelect(entryIdx, pi, roundRanks[ri], true, voteOrder[entryIdx]?.[pi])}
                     </td>
                   ))}
                 </tr>
@@ -230,7 +235,7 @@ export default function VoteTable({
                     <span className="vote-player-name-ro">{player.name || <span className="vote-placeholder">—</span>}</span>
                   </td>
                   {Array.from({ length: allEntryCount }, (_, d) => (
-                    <td key={d} className="vote-td vote-td--cell">{renderVoteSelect(d, pi)}</td>
+                    <td key={d} className="vote-td vote-td--cell">{renderVoteSelect(d, pi, undefined, false, voteOrder[d]?.[pi])}</td>
                   ))}
                   <td className="vote-td vote-td--empty" />
                 </tr>
