@@ -177,9 +177,18 @@ export default function GameBoard({
             ))}
           </div>
         )}
-        {placedIcons.map((icon) => (
-          <PlacedIcon key={icon.id} icon={icon} onDragStart={handleIconDragStart} onRemove={() => onRemoveIcon(icon.id)} />
-        ))}
+        {placedIcons.map((icon, idx) => {
+          let seqNum: number | undefined;
+          if (icon.iconDef.id === 'white' || icon.iconDef.id === 'black') {
+            seqNum = placedIcons
+              .slice(0, idx)
+              .filter((p) => (p.iconDef.id === 'white' || p.iconDef.id === 'black') && p.instanceColor === icon.instanceColor)
+              .length + 1;
+          }
+          return (
+            <PlacedIcon key={icon.id} icon={icon} seqNum={seqNum} onDragStart={handleIconDragStart} onRemove={() => onRemoveIcon(icon.id)} />
+          );
+        })}
         {placedComments.map((comment) => (
           <PlacedComment key={comment.id} comment={comment} onDragStart={handleCommentDragStart} onRemove={() => onRemoveComment(comment.id)} />
         ))}

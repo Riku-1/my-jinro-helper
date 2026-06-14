@@ -891,6 +891,17 @@
   cursor: grabbing;
 }
 
+.placed-icon-seq {
+  position: absolute;
+  bottom: 2px;
+  right: 4px;
+  font-size: 0.55rem;
+  font-weight: 700;
+  line-height: 1;
+  pointer-events: none;
+  opacity: 0.9;
+}
+
 .placed-icon--badge {
   width: 52px;
   height: 26px;

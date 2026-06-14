@@ -3,11 +3,12 @@ import type { PlacedIcon as PlacedIconType } from '../App';
 
 type Props = {
   icon: PlacedIconType;
+  seqNum?: number;
   onDragStart: (e: React.DragEvent, icon: PlacedIconType) => void;
   onRemove: () => void;
 };
 
-export default function PlacedIcon({ icon, onDragStart, onRemove }: Props) {
+export default function PlacedIcon({ icon, seqNum, onDragStart, onRemove }: Props) {
   const { iconDef, x, y } = icon;
   const [dragging, setDragging] = useState(false);
 
@@ -27,9 +28,10 @@ export default function PlacedIcon({ icon, onDragStart, onRemove }: Props) {
       onDragEnd={() => setDragging(false)}
       onContextMenu={(e) => { e.preventDefault(); onRemove(); }}
       onDoubleClick={onRemove}
-      title={`${iconDef.title}（右クリック or ダブルクリックで削除）`}
+      title={`${iconDef.title}${seqNum != null ? ` 結果${seqNum}` : ''}（右クリック or ダブルクリックで削除）`}
     >
       {iconDef.label}
+      {seqNum != null && <span className="placed-icon-seq">{seqNum}</span>}
     </div>
   );
 }
